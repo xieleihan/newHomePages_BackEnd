@@ -1,0 +1,62 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy to server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          set -e
+
+          APP_DIR="/var/www/myapp"
+
+          # clone or pull
+          if [ ! -d "$APP_DIR/.git" ]; then
+            git clone https://github.com/${{ github.repository }} $APP_DIR
+          else
+            cd $APP_DIR
+            git reset --hard
+            git pull origin main
+          fi
+
+          cd $APP_DIR
+
+          echo ">>> 写入 .env 文件"
+          cat > .env << ENV_EOF
+            SERVER_PORT=${{ secrets.SERVER_PORT }}
+            MYSQL_HOST=${{ secrets.MYSQL_HOST }}
+            MYSQL_USER=${{ secrets.MYSQL_USER }}
+            MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+            MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
+            MYSQL_PORT=${{ secrets.MYSQL_PORT }}
+            WEBPUSH_PUBLIC_KEY=${{ secrets.WEBPUSH_PUBLIC_KEY }}
+            WEBPUSH_PRIVATE_KEY=${{ secrets.WEBPUSH_PRIVATE_KEY }}
+            REDIS_PORT=${{ secrets.REDIS_PORT }}
+            REDIS_HOST=${{ secrets.REDIS_HOST }}
+            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+            REDIS_DB=${{ secrets.REDIS_DB }}
+            MY_BILIBILI_UID=${{ secrets.MY_BILIBILI_UID }}
+            FRIEND_PASSWORD=${{ secrets.FRIEND_PASSWORD }}
+            ENV_EOF
+
+          echo ">>> 安装依赖"
+          npm install --production
+
+          echo ">>> 重启应用"
+          pm2 restart myapp || pm2 start npm --name "myapp" -- run start
+          EOF
