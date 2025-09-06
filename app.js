@@ -26,8 +26,8 @@ const app = new Koa();
 // 创建一个Router对象表示web app的路由
 const router = new Router();
 
-// 升级https
-const https = require('https');
+// 升级http
+const http = require('http');
 const fs = require('fs');
 const options = {
     key: fs.readFileSync('./localhost-key.pem'),
@@ -127,7 +127,7 @@ router.post('/proxy', async (ctx) => {
 
             fs.writeFileSync(filePath, response.data);
         }
-        
+
 
         // 拼接静态访问路径（前提：Koa挂载了static目录）
         const fileUrl = `/static/bilibili/${fileName}`;
@@ -153,7 +153,7 @@ router.post('/verifyFriend', async (ctx) => {
         return;
     } else {
         if (password == FRIEND_PASSWORD) {
-            ctx.body = { code: 200, message: '验证成功',imgUrl: '/static/wechat.jpg' };
+            ctx.body = { code: 200, message: '验证成功', imgUrl: '/static/wechat.jpg' };
         } else {
             ctx.status = 401;
             ctx.body = { code: 401, message: '密码错误' };
@@ -193,7 +193,7 @@ let logs = []; // 用于存储日志
 const originalLog = console.log;
 const originalError = console.error;
 
-const server = https.createServer(options, app.callback());
+const server = http.createServer(app.callback());
 const wss1 = new WebSocket.Server({ noServer: true });
 const getServerStatusWss = new WebSocket.Server({ noServer: true });
 
@@ -297,9 +297,9 @@ router.get('/processes', async (ctx) => {
     };
 });
 
-// 升级https
+// 升级http
 server.listen(process.env.SERVER_PORT, () => {
-    console.log(`Server is running at https://localhost:${process.env.SERVER_PORT}`);
+    console.log(`Server is running at http://localhost:${process.env.SERVER_PORT}`);
 });
 
 server.on('upgrade', (request, socket, head) => {
