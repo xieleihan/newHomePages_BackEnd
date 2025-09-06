@@ -29,10 +29,6 @@ const router = new Router();
 // 升级http
 const http = require('http');
 const fs = require('fs');
-const options = {
-    key: fs.readFileSync('./localhost-key.pem'),
-    cert: fs.readFileSync('./localhost.pem')
-};
 
 // 读取环境变量
 dotenv.config();
