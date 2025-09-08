@@ -36,27 +36,9 @@ jobs:
 
           cd $APP_DIR
 
-          echo ">>> 写入 .env 文件"
-          cat > .env << ENV_EOF
-            SERVER_PORT=${{ secrets.SERVER_PORT }}
-            MYSQL_HOST=${{ secrets.MYSQL_HOST }}
-            MYSQL_USER=${{ secrets.MYSQL_USER }}
-            MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
-            MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
-            MYSQL_PORT=${{ secrets.MYSQL_PORT }}
-            WEBPUSH_PUBLIC_KEY=${{ secrets.WEBPUSH_PUBLIC_KEY }}
-            WEBPUSH_PRIVATE_KEY=${{ secrets.WEBPUSH_PRIVATE_KEY }}
-            REDIS_PORT=${{ secrets.REDIS_PORT }}
-            REDIS_HOST=${{ secrets.REDIS_HOST }}
-            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-            REDIS_DB=${{ secrets.REDIS_DB }}
-            MY_BILIBILI_UID=${{ secrets.MY_BILIBILI_UID }}
-            FRIEND_PASSWORD=${{ secrets.FRIEND_PASSWORD }}
-            ENV_EOF
-
           echo ">>> 安装依赖"
           npm install --production
 
           echo ">>> 重启应用"
-          pm2 restart myapp || pm2 start npm --name "myapp" -- run start
+          pm2 restart homepages_backend || pm2 start npm --name "homepages_backend" -- run start
           EOF
