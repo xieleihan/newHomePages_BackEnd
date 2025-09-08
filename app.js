@@ -21,12 +21,60 @@ const compress = require('koa-compress'); // 响应压缩
 dotenv.config();
 
 // 使用中间件
+// 安全头部设置
+app.use(async (ctx, next) => {
+    // 设置安全响应头
+    ctx.set('X-Content-Type-Options', 'nosniff');
+    ctx.set('X-Frame-Options', 'DENY');
+    ctx.set('X-XSS-Protection', '1; mode=block');
+    ctx.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    ctx.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+    // 移除暴露服务器信息的头部
+    ctx.remove('X-Powered-By');
+
+    await next();
+});
+
+// 请求频率限制
+const requestCounts = new Map();
+app.use(async (ctx, next) => {
+    const clientId = ctx.request.ip;
+    const currentTime = Date.now();
+    const windowTime = 60000; // 1分钟窗口
+    const maxRequests = 100; // 每分钟最大100次请求
+
+    if (!requestCounts.has(clientId)) {
+        requestCounts.set(clientId, { count: 1, resetTime: currentTime + windowTime });
+    } else {
+        const clientData = requestCounts.get(clientId);
+        if (currentTime > clientData.resetTime) {
+            clientData.count = 1;
+            clientData.resetTime = currentTime + windowTime;
+        } else {
+            clientData.count++;
+            if (clientData.count > maxRequests) {
+                ctx.status = 429;
+                ctx.body = { code: 429, message: 'Too many requests' };
+                return;
+            }
+        }
+    }
+
+    await next();
+});
+
 app.use(cors({
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    // 允许所有域名访问
+    // 生产环境中应该限制具体域名
     origin: function (ctx) {
-        return ctx.header.origin;
-    }
+        const origin = ctx.header.origin;
+        // 在生产环境中，应该验证origin是否在允许列表中
+        const allowedOrigins = ['http://localhost:3000', 'https://homepages.hongkong.atomglimpses.cn'];
+        return allowedOrigins.includes(origin) ? origin : false;
+        return origin;
+    },
+    credentials: true
 }));
 
 // 使用bodyparser
@@ -78,35 +126,102 @@ router.post('/test/post', async (ctx) => {
     };
 });
 
-// 获取静态文件列表的API
+// 安全配置
+const ALLOWED_STATIC_DIR = path.resolve(__dirname, 'public', 'static');
+const ALLOWED_EXTENSIONS = [
+    '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico',
+    '.js', '.mjs', '.jsx', '.ts', '.tsx',
+    '.css', '.scss', '.sass', '.less',
+    '.woff', '.woff2', '.ttf', '.otf', '.eot',
+    '.txt', '.md', '.json'
+];
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+// 获取静态文件列表的API (安全版本)
 router.get('/api/static-files', async (ctx) => {
     try {
-        const staticDir = path.join(__dirname, 'public', 'static');
+        // 安全检查：验证客户端IP (可选，根据需求启用)
+        // const clientIP = ctx.request.ip;
+        // if (!isAllowedIP(clientIP)) {
+        //     ctx.status = 403;
+        //     ctx.body = { code: 403, message: 'Access denied' };
+        //     return;
+        // }
+
+        // 添加简单的访问频率限制 (可选)
+        const currentTime = Date.now();
+        const clientId = ctx.request.ip + ctx.request.header['user-agent'];
+        // 这里可以实现更复杂的频率限制逻辑
+
+        function isValidPath(targetPath) {
+            const resolvedPath = path.resolve(targetPath);
+            return resolvedPath.startsWith(ALLOWED_STATIC_DIR);
+        }
+
+        function isAllowedFile(filePath) {
+            const ext = path.extname(filePath).toLowerCase();
+            return ALLOWED_EXTENSIONS.includes(ext);
+        }
+
+        function sanitizeFileName(name) {
+            // 移除路径遍历字符和特殊字符
+            return name.replace(/[\.\/\\:*?"<>|]/g, '');
+        }
 
         function walkDir(dir, baseDir) {
             let results = [];
-            const files = fs.readdirSync(dir);
 
-            files.forEach(file => {
-                const filePath = path.join(dir, file);
-                const stat = fs.statSync(filePath);
+            // 安全检查：确保目录在允许范围内
+            if (!isValidPath(dir)) {
+                console.warn(`Attempted to access unauthorized directory: ${dir}`);
+                return results;
+            }
 
-                if (stat && stat.isDirectory()) {
-                    results = results.concat(walkDir(filePath, baseDir));
-                } else {
-                    const relativePath = path.relative(baseDir, filePath).replace(/\\/g, '/');
-                    const ext = path.extname(file).toLowerCase().replace('.', '');
-                    const size = stat.size;
+            try {
+                const files = fs.readdirSync(dir);
 
-                    results.push({
-                        name: file,
-                        path: '/' + relativePath,
-                        ext: ext || 'unknown',
-                        size: size,
-                        sizeFormatted: formatBytes(size)
-                    });
-                }
-            });
+                files.forEach(file => {
+                    try {
+                        const filePath = path.join(dir, file);
+
+                        // 安全检查：验证路径
+                        if (!isValidPath(filePath)) {
+                            console.warn(`Skipping invalid path: ${filePath}`);
+                            return;
+                        }
+
+                        const stat = fs.statSync(filePath);
+
+                        // 检查文件大小限制
+                        if (stat.size > MAX_FILE_SIZE) {
+                            console.warn(`File too large, skipping: ${file} (${stat.size} bytes)`);
+                            return;
+                        }
+
+                        if (stat && stat.isDirectory()) {
+                            // 递归处理子目录
+                            results = results.concat(walkDir(filePath, baseDir));
+                        } else if (isAllowedFile(filePath)) {
+                            const relativePath = path.relative(baseDir, filePath).replace(/\\/g, '/');
+                            const ext = path.extname(file).toLowerCase().replace('.', '');
+
+                            results.push({
+                                name: sanitizeFileName(file),
+                                path: '/' + relativePath,
+                                ext: ext || 'unknown',
+                                size: stat.size,
+                                sizeFormatted: formatBytes(stat.size),
+                                lastModified: stat.mtime.toISOString()
+                            });
+                        }
+                    } catch (fileError) {
+                        console.error(`Error processing file ${file}:`, fileError.message);
+                        // 继续处理其他文件，不中断整个过程
+                    }
+                });
+            } catch (dirError) {
+                console.error(`Error reading directory ${dir}:`, dirError.message);
+            }
 
             return results;
         }
@@ -119,20 +234,35 @@ router.get('/api/static-files', async (ctx) => {
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        const files = walkDir(staticDir, staticDir);
+        // 检查静态目录是否存在
+        if (!fs.existsSync(ALLOWED_STATIC_DIR)) {
+            ctx.status = 404;
+            ctx.body = {
+                code: 404,
+                message: 'Static directory not found'
+            };
+            return;
+        }
+
+        const files = walkDir(ALLOWED_STATIC_DIR, ALLOWED_STATIC_DIR);
+
+        // 记录访问日志
+        console.log(`Static files API accessed by ${ctx.request.ip} at ${new Date().toISOString()}`);
 
         ctx.body = {
             code: 200,
             message: 'success',
-            data: files
+            data: files,
+            timestamp: new Date().toISOString()
         };
     } catch (error) {
-        console.error('Error reading static files:', error);
+        // 安全的错误处理：不暴露详细的系统信息
+        console.error('Error in static-files API:', error);
         ctx.status = 500;
         ctx.body = {
             code: 500,
-            message: 'Error reading static files',
-            error: error.message
+            message: 'Internal server error',
+            timestamp: new Date().toISOString()
         };
     }
 });
