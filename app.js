@@ -30,23 +30,33 @@ app.use(compress());
 
 // 检查路由的正常(GET)
 router.get('/test/get', async (ctx) => {
+    console.log("触发了测试用的GET请求,网络已到达服务器");
+    const date = new Date();
+    const params = ctx.request.query; // 获取查询参数
+    console.log("查询参数:", params);
     ctx.state = 200;
     ctx.body = {
         code: 200,
         message: 'Hello World! Koa get request is working! Welcome to Hong Kong!',
         type: 'test',
-        source: ctx.req.socket.remoteAddress
+        source: ctx.req.socket.remoteAddress,
+        time: date.toISOString()
     };
 });
 
 // 检查路由的正常(POST)
 router.post('/test/post', async (ctx) => {
+    console.log("触发了测试用的POST请求,网络已到达服务器");
+    const params = ctx.request.body;
+    console.log("POST参数:", params);
+    const date = new Date();
     ctx.state = 200;
     ctx.body = {
         code: 200,
         message: 'Hello World! Koa post request is working! Welcome to Hong Kong!',
         type: 'test',
-        source: ctx.req.socket.remoteAddress
+        source: ctx.req.socket.remoteAddress,
+        time: date.toISOString()
     };
 });
 
