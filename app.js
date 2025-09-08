@@ -34,6 +34,8 @@ router.get('/test/get', async (ctx) => {
     ctx.body = {
         code: 200,
         message: 'Hello World! Koa get request is working! Welcome to Hong Kong!',
+        type: 'test',
+        source: ctx.req.socket.remoteAddress
     };
 });
 
@@ -43,6 +45,8 @@ router.post('/test/post', async (ctx) => {
     ctx.body = {
         code: 200,
         message: 'Hello World! Koa post request is working! Welcome to Hong Kong!',
+        type: 'test',
+        source: ctx.req.socket.remoteAddress
     };
 });
 
