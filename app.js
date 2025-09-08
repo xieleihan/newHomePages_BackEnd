@@ -9,6 +9,7 @@ const path = require('path');
 // 插件
 // 获取环境变量插件
 const dotenv = require('dotenv');
+console.log("测试环境变量是否正常注入:", process.env.RUNTIME_TEXT || '环境变量未设置');
 
 // 创建一个Koa对象表示web app本身
 const app = new Koa();
