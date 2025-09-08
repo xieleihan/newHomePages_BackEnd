@@ -82,22 +82,22 @@ router.post('/test/post', async (ctx) => {
 router.get('/api/static-files', async (ctx) => {
     try {
         const staticDir = path.join(__dirname, 'public', 'static');
-        
+
         function walkDir(dir, baseDir) {
             let results = [];
             const files = fs.readdirSync(dir);
-            
+
             files.forEach(file => {
                 const filePath = path.join(dir, file);
                 const stat = fs.statSync(filePath);
-                
+
                 if (stat && stat.isDirectory()) {
                     results = results.concat(walkDir(filePath, baseDir));
                 } else {
                     const relativePath = path.relative(baseDir, filePath).replace(/\\/g, '/');
                     const ext = path.extname(file).toLowerCase().replace('.', '');
                     const size = stat.size;
-                    
+
                     results.push({
                         name: file,
                         path: '/' + relativePath,
@@ -107,10 +107,10 @@ router.get('/api/static-files', async (ctx) => {
                     });
                 }
             });
-            
+
             return results;
         }
-        
+
         function formatBytes(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
@@ -118,9 +118,9 @@ router.get('/api/static-files', async (ctx) => {
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
-        
+
         const files = walkDir(staticDir, staticDir);
-        
+
         ctx.body = {
             code: 200,
             message: 'success',

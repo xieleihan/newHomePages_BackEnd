@@ -36,7 +36,7 @@ h1 {
     color: white;
     margin-bottom: 30px;
     font-size: 2.5em;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* 加载状态 */
@@ -53,10 +53,24 @@ h1 {
 }
 
 @keyframes dots {
-    0%, 20% { content: ''; }
-    40% { content: '.'; }
-    60% { content: '..'; }
-    80%, 100% { content: '...'; }
+
+    0%,
+    20% {
+        content: '';
+    }
+
+    40% {
+        content: '.';
+    }
+
+    60% {
+        content: '..';
+    }
+
+    80%,
+    100% {
+        content: '...';
+    }
 }
 
 /* 统计信息 */
@@ -65,7 +79,7 @@ h1 {
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 30px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
 }
 
@@ -87,7 +101,7 @@ h1 {
     padding: 15px;
     border-radius: 10px;
     text-align: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .stat-value {
@@ -107,7 +121,7 @@ h1 {
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 30px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
 }
 
@@ -122,7 +136,7 @@ h1 {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 15px;
     padding: 20px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
 }
 
@@ -161,7 +175,7 @@ h1 {
 .tab-btn.active {
     background: linear-gradient(45deg, #667eea, #764ba2);
     color: white;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .resource-grid {
@@ -174,14 +188,14 @@ h1 {
     background: white;
     border-radius: 12px;
     padding: 15px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     border: 1px solid #e0e0e0;
 }
 
 .resource-item:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
 }
 
 .resource-preview {
@@ -273,28 +287,28 @@ h1 {
     .container {
         padding: 10px;
     }
-    
+
     h1 {
         font-size: 2em;
         margin-bottom: 20px;
     }
-    
+
     .resource-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
     #chart {
         height: 300px;
     }
-    
+
     .resource-tabs {
         justify-content: center;
     }
-    
+
     .tab-btn {
         padding: 8px 16px;
         font-size: 0.9em;
