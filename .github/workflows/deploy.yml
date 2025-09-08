@@ -20,11 +20,12 @@ jobs:
 
       - name: Create .env file
         run: |
-          echo "读取" > .env
-        env:
-          # 动态生成 .env 文件内容
-          SERVER_PORT: ${{ secrets.SERVER_PORT }}
-          RUNTIME_TEXT: ${{ secrets.RUNTIME_TEXT }}
+          # 删除旧的 .env 文件
+          rm -f .env
+              
+          # 重新生成 .env 文件内容
+          echo "SERVER_PORT=${{ secrets.SERVER_PORT }}" >> .env
+          echo "RUNTIME_TEXT=${{ secrets.RUNTIME_TEXT }}" >> .env
 
       - name: Upload .env file
         uses: appleboy/scp-action@v0.1.6
