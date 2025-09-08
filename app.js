@@ -10,6 +10,10 @@ const dotenv = require('dotenv');
 // 创建一个Koa对象表示web app本身
 const app = new Koa();
 const router = new Router();
+const bodyParser = require('koa-bodyparser'); // 解析请求体
+const cors = require('@koa/cors'); // 处理跨域
+const compress = require('koa-compress'); // 响应压缩
+// const helmet = require('koa-helmet'); // 安全相关
 // 读取环境变量
 dotenv.config();
 
