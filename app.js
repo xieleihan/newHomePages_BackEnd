@@ -17,6 +17,12 @@ const compress = require('koa-compress'); // 响应压缩
 // 读取环境变量
 dotenv.config();
 
+// 使用中间件
+app.use(bodyParser());
+app.use(cors());
+app.use(compress());
+// app.use(helmet());
+
 // 检测是否安装成功Koa
 // app.use(async ctx => {
 //     ctx.body = 'Hello World! Koa is working! Welcome to Hong Kong!';

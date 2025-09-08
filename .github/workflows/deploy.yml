@@ -40,5 +40,5 @@ jobs:
           npm install --production
 
           echo ">>> 重启应用"
-          pm2 restart homepages_backend || pm2 start npm --name "homepages_backend" -- run start
+          pm2 restart app || pm2 start npm --name "app" -- run start
           EOF
