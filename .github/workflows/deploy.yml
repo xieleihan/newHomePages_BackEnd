@@ -18,6 +18,23 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Create .env file
+        run: |
+          echo "读取" > .env
+        env:
+          # 动态生成 .env 文件内容
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+          RUNTIME_TEXT: ${{ secrets.RUNTIME_TEXT }}
+
+      - name: Upload .env file
+        uses: appleboy/scp-action@v0.1.6
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: ".env"
+          target: "/var/www/homepages_backend/.env"
+
       - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
