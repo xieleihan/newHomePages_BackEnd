@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>静态资源管理器</title>
+    <link rel="stylesheet" href="./static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📁 静态资源管理器</h1>
+        
+        <!-- 加载状态 -->
+        <div id="loading" class="loading">正在加载资源</div>
+        
+        <!-- 统计信息 -->
+        <div id="stats" class="stats hidden">
+            <h2>📊 资源统计</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-value" id="total-files">0</span>
+                    <span class="stat-label">总文件数</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="total-size">0</span>
+                    <span class="stat-label">总大小</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="file-types">0</span>
+                    <span class="stat-label">文件类型</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="image-count">0</span>
+                    <span class="stat-label">图片文件</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 图表容器 -->
+        <div id="chart-container" class="chart-container hidden">
+            <h2>🌹 资源分布图 (南丁格尔玫瑰图)</h2>
+            <div id="chart"></div>
+        </div>
+        
+        <!-- 资源列表 -->
+        <div id="resource-section" class="resource-section hidden">
+            <h2>📂 资源列表</h2>
+            
+            <!-- 标签页 -->
+            <div class="resource-tabs">
+                <button class="tab-btn active" data-type="all">全部</button>
+                <button class="tab-btn" data-type="images">图片</button>
+                <button class="tab-btn" data-type="js">JavaScript</button>
+                <button class="tab-btn" data-type="css">样式表</button>
+                <button class="tab-btn" data-type="font">字体</button>
+                <button class="tab-btn" data-type="other">其他</button>
+            </div>
+            
+            <!-- 资源网格 -->
+            <div id="resource-grid" class="resource-grid"></div>
+        </div>
+    </div>
+
+    <script src="./static/js/jquery-3.7.1.min.js"></script>
+    <script src="./static/js/echarts.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            let allFiles = [];
+            let currentFilter = 'all';
+            
+            // 文件类型配置
+            const fileTypeConfig = {
+                images: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico'],
+                js: ['js', 'mjs', 'jsx'],
+                css: ['css', 'scss', 'sass', 'less'],
+                font: ['woff', 'woff2', 'ttf', 'otf', 'eot'],
+                other: []
+            };
+            
+            // 文件图标映射
+            const fileIcons = {
+                js: '📄',
+                css: '🎨',
+                font: '🔤',
+                images: '🖼️',
+                other: '📄'
+            };
+            
+            // 加载静态文件
+            loadStaticFiles();
+            
+            function loadStaticFiles() {
+                $.ajax({
+                    url: '/api/static-files',
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.code === 200) {
+                            allFiles = response.data;
+                            processFilesData();
+                            hideLoading();
+                            showContent();
+                            renderChart();
+                            renderResourceList();
+                        } else {
+                            showError('加载失败: ' + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        showError('网络错误: ' + error);
+                    }
+                });
+            }
+            
+            function processFilesData() {
+                // 计算统计信息
+                const totalFiles = allFiles.length;
+                const totalSize = allFiles.reduce((sum, file) => sum + file.size, 0);
+                const fileTypes = new Set(allFiles.map(file => file.ext)).size;
+                const imageCount = allFiles.filter(file => 
+                    fileTypeConfig.images.includes(file.ext)).length;
+                
+                // 更新统计信息
+                $('#total-files').text(totalFiles);
+                $('#total-size').text(formatBytes(totalSize));
+                $('#file-types').text(fileTypes);
+                $('#image-count').text(imageCount);
+            }
+            
+            function renderChart() {
+                const chart = echarts.init(document.getElementById('chart'));
+                
+                // 统计文件类型分布
+                const typeCount = {};
+                allFiles.forEach(file => {
+                    const type = getFileType(file.ext);
+                    typeCount[type] = (typeCount[type] || 0) + 1;
+                });
+                
+                const data = Object.keys(typeCount).map(type => ({
+                    value: typeCount[type],
+                    name: getTypeDisplayName(type)
+                }));
+                
+                const option = {
+                    title: {
+                        text: '文件类型分布',
+                        subtext: '南丁格尔玫瑰图',
+                        left: 'center',
+                        textStyle: {
+                            fontSize: 18,
+                            fontWeight: 'bold'
+                        }
+                    },
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{a} <br/>{b}: {c} ({d}%)'
+                    },
+                    legend: {
+                        bottom: '5%',
+                        left: 'center'
+                    },
+                    series: [{
+                        name: '文件类型',
+                        type: 'pie',
+                        radius: [30, 140],
+                        center: ['50%', '50%'],
+                        roseType: 'area',
+                        itemStyle: {
+                            borderRadius: 8
+                        },
+                        data: data,
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        },
+                        animationType: 'scale',
+                        animationEasing: 'elasticOut',
+                        animationDelay: function (idx) {
+                            return Math.random() * 200;
+                        }
+                    }]
+                };
+                
+                chart.setOption(option);
+                
+                // 响应式
+                window.addEventListener('resize', function() {
+                    chart.resize();
+                });
+            }
+            
+            function renderResourceList() {
+                const filteredFiles = filterFiles(allFiles, currentFilter);
+                const grid = $('#resource-grid');
+                grid.empty();
+                
+                if (filteredFiles.length === 0) {
+                    grid.html('<div style="text-align: center; padding: 40px; color: #666;">没有找到相关文件</div>');
+                    return;
+                }
+                
+                filteredFiles.forEach(file => {
+                    const fileType = getFileType(file.ext);
+                    const isImage = fileTypeConfig.images.includes(file.ext);
+                    
+                    let previewHtml = '';
+                    if (isImage) {
+                        previewHtml = `<img class="resource-img" src="./static${file.path}" alt="${file.name}" loading="lazy">`;
+                    } else {
+                        previewHtml = `<div class="resource-icon">${fileIcons[fileType] || fileIcons.other}</div>`;
+                    }
+                    
+                    const itemHtml = `
+                        <div class="resource-item">
+                            <div class="resource-preview">
+                                ${previewHtml}
+                            </div>
+                            <div class="resource-info">
+                                <div class="resource-name">${file.name}</div>
+                                <div class="resource-details">
+                                    类型: ${file.ext.toUpperCase()} | 大小: ${file.sizeFormatted}
+                                </div>
+                                <div class="resource-actions">
+                                    ${isImage ? 
+                                        `<a href="./static${file.path}" target="_blank" class="btn btn-primary">预览</a>` :
+                                        `<a href="./static${file.path}" download class="btn btn-primary">下载</a>`
+                                    }
+                                    <a href="./static${file.path}" target="_blank" class="btn btn-secondary">链接</a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    grid.append(itemHtml);
+                });
+            }
+            
+            function filterFiles(files, type) {
+                if (type === 'all') return files;
+                
+                if (fileTypeConfig[type]) {
+                    return files.filter(file => fileTypeConfig[type].includes(file.ext));
+                }
+                
+                return files.filter(file => getFileType(file.ext) === 'other');
+            }
+            
+            function getFileType(ext) {
+                for (const [type, extensions] of Object.entries(fileTypeConfig)) {
+                    if (extensions.includes(ext)) {
+                        return type;
+                    }
+                }
+                return 'other';
+            }
+            
+            function getTypeDisplayName(type) {
+                const names = {
+                    images: '图片文件',
+                    js: 'JavaScript',
+                    css: '样式表',
+                    font: '字体文件',
+                    other: '其他文件'
+                };
+                return names[type] || type;
+            }
+            
+            function formatBytes(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            function hideLoading() {
+                $('#loading').addClass('hidden');
+            }
+            
+            function showContent() {
+                $('#stats').removeClass('hidden');
+                $('#chart-container').removeClass('hidden');
+                $('#resource-section').removeClass('hidden');
+            }
+            
+            function showError(message) {
+                $('#loading').html(`<div style="color: #ff6b6b;">❌ ${message}</div>`);
+            }
+            
+            // 标签页切换事件
+            $('.tab-btn').click(function() {
+                const type = $(this).data('type');
+                currentFilter = type;
+                
+                $('.tab-btn').removeClass('active');
+                $(this).addClass('active');
+                
+                renderResourceList();
+            });
+            
+            // 图片加载错误处理
+            $(document).on('error', '.resource-img', function() {
+                $(this).closest('.resource-preview').html('<div class="resource-icon">❌</div>');
+            });
+        });
+    </script>
+</body>
+</html>
