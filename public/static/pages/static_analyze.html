@@ -10,7 +10,7 @@
     <title>静态资源管理器</title>
     <link
         rel="stylesheet"
-        href="../static/css/style.css"
+        href="../css/style.css"
     >
 </head>
 
@@ -114,8 +114,8 @@
         </div>
     </div>
 
-    <script src="../static/js/jquery-3.7.1.min.js"></script>
-    <script src="../static/js/echarts.min.js"></script>
+    <script src="../js/jquery-3.7.1.min.js"></script>
+    <script src="../js/echarts.min.js"></script>
     <script>
         $(document).ready(function () {
             let allFiles = [];
@@ -262,7 +262,7 @@
 
                     let previewHtml = '';
                     if (isImage) {
-                        previewHtml = `<img class="resource-img" src="../static${file.path}" alt="${file.name}" loading="lazy">`;
+                        previewHtml = `<img class="resource-img" src="../${file.path}" alt="${file.name}" loading="lazy">`;
                     } else {
                         previewHtml = `<div class="resource-icon">${fileIcons[fileType] || fileIcons.other}</div>`;
                     }
@@ -279,10 +279,10 @@
                                 </div>
                                 <div class="resource-actions">
                                     ${isImage ?
-                            `<a href="../static${file.path}" target="_blank" class="btn btn-primary">预览</a>` :
-                            `<a href="../static${file.path}" download class="btn btn-primary">下载</a>`
+                            `<a href="../${file.path}" target="_blank" class="btn btn-primary">预览</a>` :
+                            `<a href="../${file.path}" download class="btn btn-primary">下载</a>`
                         }
-                                    <a href="../static${file.path}" target="_blank" class="btn btn-secondary">链接</a>
+                                    <a href="../${file.path}" target="_blank" class="btn btn-secondary">链接</a>
                                 </div>
                             </div>
                         </div>
