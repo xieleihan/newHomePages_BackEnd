@@ -9,55 +9,55 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    # steps:
+    #   - name: Checkout code
+    #     uses: actions/checkout@v4
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    #   - name: Setup SSH
+    #     uses: webfactory/ssh-agent@v0.9.0
+    #     with:
+    #       ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Create .env file
-        run: |
-          # 删除旧的 .env 文件
-          rm -f .env
+    #   - name: Create .env file
+    #     run: |
+    #       # 删除旧的 .env 文件
+    #       rm -f .env
               
-          # 重新生成 .env 文件内容
-          echo "SERVER_PORT=${{ secrets.SERVER_PORT }}" >> .env
-          echo "RUNTIME_TEXT=${{ secrets.RUNTIME_TEXT }}" >> .env
+    #       # 重新生成 .env 文件内容
+    #       echo "SERVER_PORT=${{ secrets.SERVER_PORT }}" >> .env
+    #       echo "RUNTIME_TEXT=${{ secrets.RUNTIME_TEXT }}" >> .env
 
-      - name: Upload .env file
-        uses: appleboy/scp-action@v0.1.6
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ".env"
-          target: "/var/www/homepages_backend"
+    #   - name: Upload .env file
+    #     uses: appleboy/scp-action@v0.1.6
+    #     with:
+    #       host: ${{ secrets.SSH_HOST }}
+    #       username: ${{ secrets.SSH_USER }}
+    #       key: ${{ secrets.SSH_PRIVATE_KEY }}
+    #       source: ".env"
+    #       target: "/var/www/homepages_backend"
 
-      - name: Deploy to server
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-          set -e
+    #   - name: Deploy to server
+    #     run: |
+    #       ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+    #       set -e
 
-          APP_DIR="/var/www/homepages_backend"
+    #       APP_DIR="/var/www/homepages_backend"
 
-          # clone or pull
-          if [ ! -d "$APP_DIR/.git" ]; then
-            git clone https://github.com/${{ github.repository }} $APP_DIR
-          else
-            cd $APP_DIR
-            git fetch --all
-            git reset --hard origin/main
-            git clean -fd
-          fi
+    #       # clone or pull
+    #       if [ ! -d "$APP_DIR/.git" ]; then
+    #         git clone https://github.com/${{ github.repository }} $APP_DIR
+    #       else
+    #         cd $APP_DIR
+    #         git fetch --all
+    #         git reset --hard origin/main
+    #         git clean -fd
+    #       fi
 
-          cd $APP_DIR
+    #       cd $APP_DIR
 
-          echo ">>> 安装依赖"
-          npm install --production
+    #       echo ">>> 安装依赖"
+    #       npm install --production
 
-          echo ">>> 重启应用"
-          pm2 restart app || pm2 start npm --name "app" -- run start
-          EOF
+    #       echo ">>> 重启应用"
+    #       pm2 restart app || pm2 start npm --name "app" -- run start
+    #       EOF
