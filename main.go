@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"time"
 	"gin/config"
+	"gin/handler"
 )
 
 func main()  {
@@ -17,6 +18,9 @@ func main()  {
 			"version": config.Version,
 		})
 	})
+
+	// 注册IP信息查询路由
+	r.GET("/ip",handler.GetIPInfoHandler)
 
 	// 启动服务
 	r.Run(config.Port)
