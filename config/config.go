@@ -5,4 +5,5 @@ const (
 	Version = "v1.0.0"
 	Port    = ":8080"
 	IP_API_URL = "http://ip-api.com/json/"
+	SecretKey = "XJuWPXiksYdq6EGPLUjXvEnAbkR7ZEWzubZ87LUMVVuZq3NZ5CYkV0aGgzYwLRQGZ2gCyj2Mtt5Z8rBe1KAZa4XLFeKd6Q4Q5zjR"
 )

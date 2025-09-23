@@ -7,7 +7,7 @@ import (
 )
 
 func GetIPInfoHandler(c *gin.Context) {
-	ip := c.Param("ip")
+	ip := c.Query("query")
 	ipInfo, err := service.GetIPInfo(ip)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
