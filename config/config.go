@@ -20,7 +20,7 @@ var (
 	IP_API_URL          string
 	SecretKey           string
 	RedisAddr           string
-	RedisHost           int
+	RedisHost           string
 	RedisPassword       string
 	RedisDB             int
 	TokenExpireDuration time.Duration
@@ -29,6 +29,10 @@ var (
 	Mysqldb             string
 	Mysqlusername       string
 	Mysqlpassword       string
+	EmailHost           string
+	EmailPort           int
+	Email               string
+	EmailPassword       string
 )
 
 func init() {
@@ -41,7 +45,7 @@ func init() {
 	IP_API_URL = getEnv("IP_API_URL")
 	SecretKey = getEnv("SECRET_KEY")
 	RedisAddr = getEnv("REDIS_ADDR")
-	RedisHost = getEnvAsInt("REDIS_HOST")
+	RedisHost = getEnv("REDIS_HOST")
 	RedisPassword = getEnv("REDIS_PASSWORD")
 	RedisDB = getEnvAsInt("REDIS_DB")
 	TokenExpireDuration = time.Duration(getEnvAsInt("TOKEN_EXPIRE_DURATION")) * time.Second
@@ -50,6 +54,10 @@ func init() {
 	Mysqldb = getEnv("MYSQLDB")
 	Mysqlusername = getEnv("MYSQLUSERNAME")
 	Mysqlpassword = getEnv("MYSQLPASSWORD")
+	EmailHost = getEnv("EMAIL_HOST")
+	EmailPort = getEnvAsInt("EMAIL_PORT")
+	Email = getEnv("EMAIL")
+	EmailPassword = getEnv("EMAIL_PASSWORD")
 }
 
 func getEnv(key string) string {

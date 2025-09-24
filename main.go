@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/time/rate"
 	"time"
+	"gin/db"
 )
 
 func RateLimitMiddleware(rps rate.Limit, burst int) gin.HandlerFunc {
@@ -29,6 +30,7 @@ func RateLimitMiddleware(rps rate.Limit, burst int) gin.HandlerFunc {
 func main() {
 	public := gin.Default()
 	private := gin.Default()
+	db.InitRedis()
 
 	public.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"}, // 建议生产配置具体域名
@@ -70,6 +72,8 @@ func main() {
 
 	public.GET("/ip", handler.GetIPInfoHandler)                 // 获取IP的信息路由
 	public.GET("/api/static-files", handler.StaticFilesHandler) // 获取静态资源文件列表路由
+	public.POST("/api/send-email", handler.SendEmailHandler) // 发送邮箱验证码路由
+	public.POST("/api/verify-code", handler.VerifyCodeHandler) // 验证邮箱验证码路由
 
 	auth.Use(middleware.JWTAuthMiddleware())
 	// {
