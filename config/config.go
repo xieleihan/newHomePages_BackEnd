@@ -1,10 +1,69 @@
 package config
 
+import (
+	"log"
+	"os"
+	"strconv"
+	"time"
+
+	"github.com/joho/godotenv"
+)
+
 const (
 	AppName = "Go Gin Web Framework"
 	Version = "v1.0.0"
-	Port    = ":8082"
-	PrivatePort = ":8083"
-	IP_API_URL = "http://ip-api.com/json/"
-	SecretKey = "XJuWPXiksYdq6EGPLUjXvEnAbkR7ZEWzubZ87LUMVVuZq3NZ5CYkV0aGgzYwLRQGZ2gCyj2Mtt5Z8rBe1KAZa4XLFeKd6Q4Q5zjR"
 )
+
+var (
+	Port                string
+	PrivatePort         string
+	IP_API_URL          string
+	SecretKey           string
+	RedisAddr           string
+	RedisHost           int
+	RedisPassword       string
+	RedisDB             int
+	TokenExpireDuration time.Duration
+	Mysqlhost           string
+	Mysqlport           int
+	Mysqldb             string
+	Mysqlusername       string
+	Mysqlpassword       string
+)
+
+func init() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("加载.env文件失败，使用系统环境变量")
+	}
+
+	Port = getEnv("PORT")
+	PrivatePort = getEnv("PRIVATE_PORT")
+	IP_API_URL = getEnv("IP_API_URL")
+	SecretKey = getEnv("SECRET_KEY")
+	RedisAddr = getEnv("REDIS_ADDR")
+	RedisHost = getEnvAsInt("REDIS_HOST")
+	RedisPassword = getEnv("REDIS_PASSWORD")
+	RedisDB = getEnvAsInt("REDIS_DB")
+	TokenExpireDuration = time.Duration(getEnvAsInt("TOKEN_EXPIRE_DURATION")) * time.Second
+	Mysqlhost = getEnv("MYSQLHOST")
+	Mysqlport = getEnvAsInt("MYSQLPORT")
+	Mysqldb = getEnv("MYSQLDB")
+	Mysqlusername = getEnv("MYSQLUSERNAME")
+	Mysqlpassword = getEnv("MYSQLPASSWORD")
+}
+
+func getEnv(key string) string {
+	if value, ok := os.LookupEnv(key); ok && value != "" {
+		return value
+	}
+	return ""
+}
+
+func getEnvAsInt(key string) int {
+	if value, ok := os.LookupEnv(key); ok && value != "" {
+		if intVal, err := strconv.Atoi(value); err == nil {
+			return intVal
+		}
+	}
+	return 0
+}
