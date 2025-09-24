@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	"time"
 	"gin/config"
 	"gin/handler"
+	"gin/middleware"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"golang.org/x/time/rate"
+	"time"
 )
 
 func RateLimitMiddleware(rps rate.Limit, burst int) gin.HandlerFunc {
@@ -25,10 +26,11 @@ func RateLimitMiddleware(rps rate.Limit, burst int) gin.HandlerFunc {
 	}
 }
 
-func main()  {
-	r := gin.Default() // 创建一个默认的路由引擎
+func main() {
+	public := gin.Default()
+	private := gin.Default()
 
-	r.Use(cors.New(cors.Config{
+	public.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"}, // 建议生产配置具体域名
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -37,24 +39,56 @@ func main()  {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	r.Static("/static", "./public/static")
-	api := r.Group("/")
+	public.Static("/static", "./public/static")
+	api := public.Group("/")
+	auth := public.Group("/")
 	api.Use(RateLimitMiddleware(5, 10))
 
-	r.GET("/test", func(c *gin.Context) {
+	// 公共接口测试
+	public.GET("/test", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": config.AppName + " is running!",
-			"code":200,
-			"time":time.Now().Format("2006-01-02 15:04:05"),
+			"code":    200,
+			"time":    time.Now().Format("2006-01-02 15:04:05"),
 			"version": config.Version,
 		})
 	})
+	// 私有接口测试
+	// public.GET("/ptest", func(c *gin.Context) {
+	// 	resp, err := http.Get("http://127.0.0.1:8083/private/test")
+	// 	if err != nil {
+	// 		c.JSON(500, gin.H{
+	// 			"message": "请求私有接口失败",
+	// 			"error":   err.Error(),
+	// 		})
+	// 		return
+	// 	}
+	// 	defer resp.Body.Close()
 
-	// 注册IP信息查询路由
-	r.GET("/ip",handler.GetIPInfoHandler)// 获取IP的信息路由
-	r.GET("/api/static-files", handler.StaticFilesHandler)// 获取静态资源文件列表路由
-	r.POST("/api/proxy",handler.ProxyDownloadHandler) // 代理下载路由
+	// 	c.DataFromReader(resp.StatusCode, resp.ContentLength, resp.Header.Get("Content-Type"), resp.Body, nil)
+	// })
 
-	// 启动服务
-	r.Run(config.Port)
+	public.GET("/ip", handler.GetIPInfoHandler)                 // 获取IP的信息路由
+	public.GET("/api/static-files", handler.StaticFilesHandler) // 获取静态资源文件列表路由
+
+	auth.Use(middleware.JWTAuthMiddleware())
+	// {
+	// 	auth.POST("/api/proxy",handler.ProxyDownloadHandler) // 代理下载路由
+	// }
+
+	private.POST("/api/proxy", handler.ProxyDownloadHandler)
+	// private.GET("/private/test", func(c *gin.Context) {
+	// 	c.JSON(200, gin.H{
+	// 		"message": "Private API is running!",
+	// 		"code":    200,
+	// 		"time":    time.Now().Format("2006-01-02 15:04:05"),
+	// 		"version": config.Version,
+	// 	})
+	// })
+
+	// 启动公共接口服务
+	go func() {
+		public.Run(config.Port)
+	}()
+	private.Run("127.0.0.1" + config.PrivatePort)
 }
