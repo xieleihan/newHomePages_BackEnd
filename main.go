@@ -42,9 +42,8 @@ func main() {
 	}))
 
 	public.Static("/static", "./public/static")
-	api := public.Group("/")
 	auth := public.Group("/")
-	api.Use(RateLimitMiddleware(5, 10))
+	public.Use(RateLimitMiddleware(5, 10))
 
 	// 公共接口测试
 	public.GET("/test", func(c *gin.Context) {
