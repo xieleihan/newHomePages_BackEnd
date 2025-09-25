@@ -73,6 +73,8 @@ func main() {
 	public.GET("/api/static-files", handler.StaticFilesHandler) // 获取静态资源文件列表路由
 	public.POST("/api/send-email", handler.SendEmailHandler) // 发送邮箱验证码路由
 	public.POST("/api/verify-code", handler.VerifyCodeHandler) // 验证邮箱验证码路由
+	public.POST("/api/captcha", handler.GetCaptchaHandler) // 获取图形验证码路由
+	public.POST("/api/verify-captcha", handler.VerifyCaptchaHandler) // 验证图形验证码路由
 
 	auth.Use(middleware.JWTAuthMiddleware())
 	// {
