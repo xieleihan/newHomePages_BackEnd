@@ -71,7 +71,26 @@ func SendEmail(to, code string) error {
 	m.SetHeader("From", config.Email)
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", "账号注册验证码")
-	m.SetBody("text/plain", "您的验证码是：" + code + "，请在3分钟内使用。")
+	m.SetBody("text/html", `
+<div style="width: 400px;height: 50px;display: flex;flex-direction: row ;align-items: center;">
+  <img style="width:50px;height:50px;margin-right: 10px;" src="https://github.com/xieleihan/QingluanSearch-AndroidDev/raw/main/peacock_flat.png" alt="" />
+  <span style="font-weight: bold;font-family: kaiti;">
+    南秋SouthAki
+    <span style="font-family: kaiti;color: #ccc;display: block;margin-left: 10px;font-size: 10px;">
+      邮箱验证平台
+    </span>
+  </span>
+</div>
+<h1>您好：</h1>
+<p style="font-size: 18px;color:#000;">
+  您的验证码为：
+  <span style="font-size: 16px;color:#f00;"><b>` + code + `</b></span>
+</p>
+<p>您当前正在使用南秋的邮箱验证服务，验证码告知他人将会导致数据信息被盗，请勿泄露!</p>
+<p>他人之招,谨防上当受骗.</p>
+<p style="font-size: 1.5rem;color:#999;">3分钟内有效</p>
+`)
+
 
 	d := gomail.NewDialer(config.EmailHost, config.EmailPort, config.Email, config.EmailPassword)
 

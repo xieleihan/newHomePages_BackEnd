@@ -7,9 +7,9 @@ import (
 
 type RedisStore struct{}
 
-func (r RedisStore) Set(id, value string) {
+func (r RedisStore) Set(id, value string) error {
 	key := "captcha:" + id
-	db.RDB.Set(db.Ctx, key, value, 3*time.Minute)
+	return db.RDB.Set(db.Ctx, key, value, 3*time.Minute).Err()
 }
 
 func (r RedisStore) Get(id string, clear bool) string {
