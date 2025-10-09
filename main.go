@@ -2,13 +2,14 @@ package main
 
 import (
 	"gin/config"
+	"gin/db"
 	"gin/handler"
 	"gin/middleware"
+	"time"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/time/rate"
-	"time"
-	"gin/db"
 )
 
 func RateLimitMiddleware(rps rate.Limit, burst int) gin.HandlerFunc {
@@ -75,6 +76,8 @@ func main() {
 	public.POST("/api/verify-code", handler.VerifyCodeHandler) // 验证邮箱验证码路由
 	public.POST("/api/captcha", handler.GetCaptchaHandler) // 获取图形验证码路由
 	public.POST("/api/verify-captcha", handler.VerifyCaptchaHandler) // 验证图形验证码路由
+	public.GET("/api/bili-follow-anime", handler.BilibiliAnimeHandler) // 获取B站追番列表路由
+	public.GET("/api/bili-follow-movie", handler.BilibiliMovieHandler) // 获取B站追剧列表路由
 
 	auth.Use(middleware.JWTAuthMiddleware())
 	// {

@@ -12,6 +12,8 @@ import (
 const (
 	AppName = "Go Gin Web Framework"
 	Version = "v1.0.0"
+	BiliFollowURL = "https://api.bilibili.com/x/space/bangumi/follow/list"
+	PageSize      = 20
 )
 
 var (
