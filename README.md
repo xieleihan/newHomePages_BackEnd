@@ -9,3 +9,7 @@ $env:GOARCH = "amd64"
 go build -o app main.go
 ```
 ## 接口文档
+
+```text
+/swagger/index.html
+```

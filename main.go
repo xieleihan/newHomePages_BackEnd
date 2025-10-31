@@ -3,13 +3,15 @@ package main
 import (
 	"gin/config"
 	"gin/db"
+	_ "gin/docs"
 	"gin/handler"
 	"gin/middleware"
-	"time"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/swaggo/files"
+	"github.com/swaggo/gin-swagger"
 	"golang.org/x/time/rate"
+	"time"
 )
 
 func RateLimitMiddleware(rps rate.Limit, burst int) gin.HandlerFunc {
@@ -28,6 +30,27 @@ func RateLimitMiddleware(rps rate.Limit, burst int) gin.HandlerFunc {
 	}
 }
 
+// @title           Home Pages Backend API
+// @version         1.0
+// @description     这是一个个人主页后端 API 服务器
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8082
+// @BasePath  /
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+
+// @externalDocs.description  OpenAPI
+// @externalDocs.url          https://swagger.io/resources/open-api/
 func main() {
 	public := gin.Default()
 	private := gin.Default()
@@ -70,14 +93,17 @@ func main() {
 	// 	c.DataFromReader(resp.StatusCode, resp.ContentLength, resp.Header.Get("Content-Type"), resp.Body, nil)
 	// })
 
-	public.GET("/ip", handler.GetIPInfoHandler)                 // 获取IP的信息路由
-	public.GET("/api/static-files", handler.StaticFilesHandler) // 获取静态资源文件列表路由
-	public.POST("/api/send-email", handler.SendEmailHandler) // 发送邮箱验证码路由
-	public.POST("/api/verify-code", handler.VerifyCodeHandler) // 验证邮箱验证码路由
-	public.POST("/api/captcha", handler.GetCaptchaHandler) // 获取图形验证码路由
-	public.POST("/api/verify-captcha", handler.VerifyCaptchaHandler) // 验证图形验证码路由
+	public.GET("/ip", handler.GetIPInfoHandler)                        // 获取IP的信息路由
+	public.GET("/api/static-files", handler.StaticFilesHandler)        // 获取静态资源文件列表路由
+	public.POST("/api/send-email", handler.SendEmailHandler)           // 发送邮箱验证码路由
+	public.POST("/api/verify-code", handler.VerifyCodeHandler)         // 验证邮箱验证码路由
+	public.POST("/api/captcha", handler.GetCaptchaHandler)             // 获取图形验证码路由
+	public.POST("/api/verify-captcha", handler.VerifyCaptchaHandler)   // 验证图形验证码路由
 	public.GET("/api/bili-follow-anime", handler.BilibiliAnimeHandler) // 获取B站追番列表路由
 	public.GET("/api/bili-follow-movie", handler.BilibiliMovieHandler) // 获取B站追剧列表路由
+
+	// Swagger 文档路由
+	public.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	auth.Use(middleware.JWTAuthMiddleware())
 	// {

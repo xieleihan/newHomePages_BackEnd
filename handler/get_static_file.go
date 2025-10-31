@@ -2,19 +2,20 @@ package handler
 
 import (
 	"fmt"
+	"gin/model"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
 	"github.com/gin-gonic/gin"
-	"gin/model"
 )
 
 const (
 	ALLOWED_STATIC_DIR = "./public/static"
 	ALLOWED_EXTENSIONS = ".js,.css,.png,.jpg,.jpeg,.gif,.svg,.ico,.woff,.woff2,.ttf,.eot,.otf,.map"
-	MAX_FILE_SIZE    = 10 * 1024 * 1024 // 10MB
+	MAX_FILE_SIZE      = 10 * 1024 * 1024 // 10MB
 )
 
 func isAllowedFile(ext string) bool {
@@ -51,6 +52,16 @@ func formatBytes(bytes int64) string {
 	return fmt.Sprintf("%.2f %s", f, sizes[i])
 }
 
+// StaticFilesHandler 获取静态文件列表
+// @Summary 获取静态文件列表
+// @Description 获取public/static目录下的所有允许访问的静态文件信息
+// @Tags 静态文件
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{} "静态文件列表"
+// @Failure 404 {object} map[string]interface{} "静态资源不存在"
+// @Failure 500 {object} map[string]interface{} "服务器错误"
+// @Router /api/static-files [get]
 func StaticFilesHandler(c *gin.Context) {
 	if _, err := os.Stat(ALLOWED_STATIC_DIR); os.IsNotExist(err) {
 		c.JSON(404, gin.H{

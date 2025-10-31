@@ -25,3 +25,18 @@ dist-ssr
 *.sw?
 .env.production
 .env
+
+# Go生成的Swagger文档（自动生成，无需提交）
+# docs.go 包含 docTemplate 常量，被编译进二进制，运行时提供 Swagger UI
+# swagger.json 只是可读版本（可选，调试用）
+docs/docs.go
+docs/swagger.json
+
+# 编译输出
+newHomePages_BackEnd
+bin/
+*.exe
+
+# Go相关
+go.sum
+.air.toml
