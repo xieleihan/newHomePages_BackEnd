@@ -11,6 +11,9 @@ timeout /t 1 /nobreak
 
 REM 启动Go应用（带热重载）
 echo 后端服务启动...
-air
+
+REM 使用完整路径运行 air，自动查找 GOPATH
+for /f "tokens=*" %%i in ('go env GOPATH') do set GOPATH=%%i
+%GOPATH%\bin\air.exe
 
 pause

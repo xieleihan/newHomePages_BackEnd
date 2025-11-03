@@ -6,12 +6,13 @@ import (
 	_ "gin/docs"
 	"gin/handler"
 	"gin/middleware"
+	"time"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/files"
-	"github.com/swaggo/gin-swagger"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"golang.org/x/time/rate"
-	"time"
 )
 
 func RateLimitMiddleware(rps rate.Limit, burst int) gin.HandlerFunc {
@@ -101,6 +102,8 @@ func main() {
 	public.POST("/api/verify-captcha", handler.VerifyCaptchaHandler)   // 验证图形验证码路由
 	public.GET("/api/bili-follow-anime", handler.BilibiliAnimeHandler) // 获取B站追番列表路由
 	public.GET("/api/bili-follow-movie", handler.BilibiliMovieHandler) // 获取B站追剧列表路由
+	public.GET("/api/server-status", handler.GetServerStatusHandler)   // 获取服务器运行状态路由
+	public.POST("/api/server-status", handler.GetServerStatusHandler)  // 获取服务器运行状态路由(POST)
 
 	// Swagger 文档路由
 	public.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
