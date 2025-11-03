@@ -1,3 +1,13 @@
-*.js
-*.css
-*.html
+# Go 文件为主要语言
+*.go linguist-language=Go
+
+# 前端文件忽略统计
+*.js linguist-vendored
+*.css linguist-vendored
+*.html linguist-vendored
+
+# 其他常见文件忽略
+*.json linguist-vendored
+*.yaml linguist-vendored
+*.yml linguist-vendored
+*.md linguist-documentation

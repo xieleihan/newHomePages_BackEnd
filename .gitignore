@@ -40,3 +40,5 @@ bin/
 # Go相关
 go.sum
 .air.toml
+
+Redis/
