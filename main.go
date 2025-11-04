@@ -105,6 +105,7 @@ func main() {
 	public.GET("/api/server-status", handler.GetServerStatusHandler)       // 获取服务器运行状态路由
 	public.POST("/api/server-status", handler.GetServerStatusHandler)      // 获取服务器运行状态路由(POST)
 	public.POST("/api/download-pictures", handler.DownloadPicturesHandler) // 通用图片下载路由
+	public.POST("/api/proxy-html", handler.ProxyHTMLHandler)               // 代理HTML访问路由
 
 	// Swagger 文档路由
 	public.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
