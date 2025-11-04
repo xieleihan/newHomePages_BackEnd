@@ -94,16 +94,17 @@ func main() {
 	// 	c.DataFromReader(resp.StatusCode, resp.ContentLength, resp.Header.Get("Content-Type"), resp.Body, nil)
 	// })
 
-	public.GET("/ip", handler.GetIPInfoHandler)                        // 获取IP的信息路由
-	public.GET("/api/static-files", handler.StaticFilesHandler)        // 获取静态资源文件列表路由
-	public.POST("/api/send-email", handler.SendEmailHandler)           // 发送邮箱验证码路由
-	public.POST("/api/verify-code", handler.VerifyCodeHandler)         // 验证邮箱验证码路由
-	public.POST("/api/captcha", handler.GetCaptchaHandler)             // 获取图形验证码路由
-	public.POST("/api/verify-captcha", handler.VerifyCaptchaHandler)   // 验证图形验证码路由
-	public.GET("/api/bili-follow-anime", handler.BilibiliAnimeHandler) // 获取B站追番列表路由
-	public.GET("/api/bili-follow-movie", handler.BilibiliMovieHandler) // 获取B站追剧列表路由
-	public.GET("/api/server-status", handler.GetServerStatusHandler)   // 获取服务器运行状态路由
-	public.POST("/api/server-status", handler.GetServerStatusHandler)  // 获取服务器运行状态路由(POST)
+	public.GET("/ip", handler.GetIPInfoHandler)                            // 获取IP的信息路由
+	public.GET("/api/static-files", handler.StaticFilesHandler)            // 获取静态资源文件列表路由
+	public.POST("/api/send-email", handler.SendEmailHandler)               // 发送邮箱验证码路由
+	public.POST("/api/verify-code", handler.VerifyCodeHandler)             // 验证邮箱验证码路由
+	public.POST("/api/captcha", handler.GetCaptchaHandler)                 // 获取图形验证码路由
+	public.POST("/api/verify-captcha", handler.VerifyCaptchaHandler)       // 验证图形验证码路由
+	public.GET("/api/bili-follow-anime", handler.BilibiliAnimeHandler)     // 获取B站追番列表路由
+	public.GET("/api/bili-follow-movie", handler.BilibiliMovieHandler)     // 获取B站追剧列表路由
+	public.GET("/api/server-status", handler.GetServerStatusHandler)       // 获取服务器运行状态路由
+	public.POST("/api/server-status", handler.GetServerStatusHandler)      // 获取服务器运行状态路由(POST)
+	public.POST("/api/download-pictures", handler.DownloadPicturesHandler) // 通用图片下载路由
 
 	// Swagger 文档路由
 	public.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
