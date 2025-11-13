@@ -23,6 +23,7 @@ var (
 	SecretKey           string
 	RedisAddr           string
 	RedisHost           string
+	RedisUsername       string
 	RedisPassword       string
 	RedisDB             int
 	TokenExpireDuration time.Duration
@@ -48,6 +49,7 @@ func init() {
 	SecretKey = getEnv("SECRET_KEY")
 	RedisAddr = getEnv("REDIS_ADDR")
 	RedisHost = getEnv("REDIS_HOST")
+	RedisUsername = getEnv("REDIS_USERNAME")
 	RedisPassword = getEnv("REDIS_PASSWORD")
 	RedisDB = getEnvAsInt("REDIS_DB")
 	TokenExpireDuration = time.Duration(getEnvAsInt("TOKEN_EXPIRE_DURATION")) * time.Second
