@@ -1,0 +1,485 @@
+basePath: /
+definitions:
+  handler.CaptchaRequest:
+    properties:
+      uuid:
+        type: string
+    required:
+    - uuid
+    type: object
+  handler.EmailRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  handler.VerifyCaptchaRequest:
+    properties:
+      code:
+        type: string
+      uuid:
+        type: string
+    required:
+    - code
+    - uuid
+    type: object
+  handler.VerifyRequest:
+    properties:
+      code:
+        type: string
+      email:
+        type: string
+    required:
+    - code
+    - email
+    type: object
+  model.ProxyHTMLErrorResponse:
+    properties:
+      code:
+        type: integer
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  model.ProxyHTMLRequest:
+    properties:
+      timeout:
+        description: 超时时间(秒)，默认30秒
+        type: integer
+      url:
+        type: string
+    required:
+    - url
+    type: object
+  model.ProxyHTMLResponse:
+    properties:
+      contentLen:
+        type: integer
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      html:
+        type: string
+      statusCode:
+        type: integer
+      title:
+        type: string
+      url:
+        type: string
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+host: localhost:8082
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: 这是一个个人主页后端 API 服务器
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Home Pages Backend API
+  version: "1.0"
+paths:
+  /api/bili-follow-anime:
+    get:
+      consumes:
+      - application/json
+      description: 根据用户UID获取B站追番列表
+      parameters:
+      - description: B站用户UID
+        in: query
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 追番列表
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 内部服务器错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取B站用户追番列表
+      tags:
+      - B站API
+  /api/bili-follow-movie:
+    get:
+      consumes:
+      - application/json
+      description: 根据用户UID获取B站追剧列表
+      parameters:
+      - description: B站用户UID
+        in: query
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 追剧列表
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 内部服务器错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取B站用户追剧列表
+      tags:
+      - B站API
+  /api/captcha:
+    post:
+      consumes:
+      - application/json
+      description: 生成图形验证码，返回base64编码的图片
+      parameters:
+      - description: UUID（可选，不传则自动生成）
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CaptchaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 验证码生成成功
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 内部服务器错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取图形验证码
+      tags:
+      - 验证码
+  /api/download-pictures:
+    post:
+      consumes:
+      - application/json
+      description: 输入分享文本（支持小红书、抖音等平台），自动判断平台类型，解析并返回图片 URL
+      parameters:
+      - description: '分享文本 {share_text: string}'
+        in: body
+        name: request
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 图片 URL 列表
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 内部服务器错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 解析分享链接并获取图片
+      tags:
+      - 图片下载
+  /api/proxy-html:
+    post:
+      consumes:
+      - application/json
+      description: 通过后端代理访问指定URL的网页，获取完整的HTML内容并发送给前端
+      parameters:
+      - description: 代理请求参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ProxyHTMLRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回HTML内容
+          schema:
+            $ref: '#/definitions/model.ProxyHTMLResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/model.ProxyHTMLErrorResponse'
+        "408":
+          description: 请求超时
+          schema:
+            $ref: '#/definitions/model.ProxyHTMLErrorResponse'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/model.ProxyHTMLErrorResponse'
+      summary: 代理访问网页HTML
+      tags:
+      - Proxy
+  /api/proxy-html-safe:
+    post:
+      consumes:
+      - application/json
+      description: 通过后端代理访问指定URL的网页，获取完整的HTML内容，并移除脚本和危险代码后发送给前端
+      parameters:
+      - description: 代理请求参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ProxyHTMLRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功返回清理后的HTML内容
+          schema:
+            $ref: '#/definitions/model.ProxyHTMLResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/model.ProxyHTMLErrorResponse'
+        "408":
+          description: 请求超时
+          schema:
+            $ref: '#/definitions/model.ProxyHTMLErrorResponse'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/model.ProxyHTMLErrorResponse'
+      summary: 代理访问网页HTML（安全版本）
+      tags:
+      - Proxy
+  /api/send-email:
+    post:
+      consumes:
+      - application/json
+      description: 向指定邮箱发送6位数字验证码
+      parameters:
+      - description: 邮箱地址
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.EmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 验证码发送成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "429":
+          description: 发送太频繁
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 内部服务器错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 发送邮箱验证码
+      tags:
+      - 邮箱验证
+  /api/server-status:
+    get:
+      consumes:
+      - application/json
+      description: 获取服务器的 CPU、内存、磁盘、网络等实时运行状态，支持 Linux(CentOS/Ubuntu/Debian)、macOS、Windows
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 服务器状态信息
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 内部服务器错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取服务器运行状态
+      tags:
+      - 服务器状态
+    post:
+      consumes:
+      - application/json
+      description: 获取服务器的 CPU、内存、磁盘、网络等实时运行状态，支持 Linux(CentOS/Ubuntu/Debian)、macOS、Windows
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 服务器状态信息
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 内部服务器错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取服务器运行状态
+      tags:
+      - 服务器状态
+  /api/static-files:
+    get:
+      consumes:
+      - application/json
+      description: 获取public/static目录下的所有允许访问的静态文件信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 静态文件列表
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 静态资源不存在
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取静态文件列表
+      tags:
+      - 静态文件
+  /api/verify-captcha:
+    post:
+      consumes:
+      - application/json
+      description: 验证用户输入的图形验证码
+      parameters:
+      - description: UUID和验证码
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.VerifyCaptchaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 验证成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 验证失败
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 内部服务器错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 验证图形验证码
+      tags:
+      - 验证码
+  /api/verify-code:
+    post:
+      consumes:
+      - application/json
+      description: 验证用户输入的6位数字验证码
+      parameters:
+      - description: 邮箱和验证码
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.VerifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 验证成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 验证失败
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 内部服务器错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 验证邮箱验证码
+      tags:
+      - 邮箱验证
+  /ip:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定IP或客户端IP的地理位置信息
+      parameters:
+      - description: 要查询的IP地址，不填则查询客户端IP
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: IP信息
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 内部服务器错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取IP地址信息
+      tags:
+      - IP信息
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

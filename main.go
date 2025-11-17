@@ -56,6 +56,7 @@ func main() {
 	public := gin.Default()
 	private := gin.Default()
 	db.InitRedis()
+	db.InitMysql()
 
 	public.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"}, // 建议生产配置具体域名
@@ -102,10 +103,12 @@ func main() {
 	public.POST("/api/verify-captcha", handler.VerifyCaptchaHandler)       // 验证图形验证码路由
 	public.GET("/api/bili-follow-anime", handler.BilibiliAnimeHandler)     // 获取B站追番列表路由
 	public.GET("/api/bili-follow-movie", handler.BilibiliMovieHandler)     // 获取B站追剧列表路由
-	public.GET("/api/server-status", handler.GetServerStatusHandler)       // 获取服务器运行状态路由
-	public.POST("/api/server-status", handler.GetServerStatusHandler)      // 获取服务器运行状态路由(POST)
-	public.POST("/api/download-pictures", handler.DownloadPicturesHandler) // 通用图片下载路由
-	public.POST("/api/proxy-html", handler.ProxyHTMLHandler)               // 代理HTML访问路由
+	// public.GET("/api/server-status", handler.GetServerStatusHandler)       // 获取服务器运行状态路由
+	// public.POST("/api/server-status", handler.GetServerStatusHandler)      // 获取服务器运行状态路由(POST)
+	// public.POST("/api/download-pictures", handler.DownloadPicturesHandler) // 通用图片下载路由
+	// public.POST("/api/proxy-html", handler.ProxyHTMLHandler)               // 代理HTML访问路由
+	public.POST("/api/register", handler.RegisterHandler)               // 用户注册路由
+	// public.POST("/api/login", handler.LoginHandler)                     // 用户登录路由
 
 	// Swagger 文档路由
 	public.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
