@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"gin/db"
 	"gin/model"
+	"github.com/google/uuid"
+	"time"
 )
 
 // RegisterService 用户注册服务
@@ -37,6 +39,9 @@ func RegisterService(req model.Register) error {
 		Email:    req.Email,
 		Salt:     req.Salt,
 		Verifier: req.Verifier,
+		UserId:   uuid.New().String(),
+		CreatedAt: time.Now().Format(time.RFC3339),
+		UpdatedAt: time.Now().Format(time.RFC3339),
 	}
 
 	if err := db.DB.Create(&newUser).Error; err != nil {

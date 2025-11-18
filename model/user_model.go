@@ -4,10 +4,13 @@ package model
 
 // User 用户数据库模型 - 对应 user 表
 type User struct {
-	Username string `gorm:"column:username;primaryKey" json:"username"` // 用户名（主键）
-	Email    string `gorm:"column:email;uniqueIndex" json:"email"`      // 邮箱地址（唯一索引）
+	Username string `gorm:"column:username" json:"username"` // 用户名
+	Email    string `gorm:"column:email" json:"email"`      // 邮箱地址
 	Salt     string `gorm:"column:salt" json:"salt"`                    // SRP密码盐值
 	Verifier string `gorm:"column:verifier" json:"verifier"`            // SRP密码验证器
+	UserId string `gorm:"column:userId" json:"userId"`          // 用户ID
+	CreatedAt string `gorm:"column:createdAt" json:"createdAt"` // 创建时间
+	UpdatedAt string `gorm:"column:updatedAt" json:"updatedAt"` // 更新时间
 }
 
 // TableName 指定表名
@@ -16,13 +19,13 @@ func (User) TableName() string {
 }
 
 type Register struct {
-	Username              string `json:"username" binding:"required"`                    // 用户名
+	Username              string `json:"username"`                    // 用户名
 	Email                 string `json:"email" binding:"required,email"`                 // 邮箱地址
-	Salt                  string `json:"salt" binding:"required"`                        // 密码的盐值
-	Verifier              string `json:"verifier" binding:"required"`                    // 密码的验证器
-	EmailVerificationCode string `json:"emailVerificationCode" binding:"required,len=6"` // 邮箱验证码
-	HumanCheckKey         string `json:"humanCheckKey" binding:"required"`               // 人机验证验证码对应的key
-	HumanCheckCode        string `json:"humanCheckCode" binding:"required"`              // 人机验证验证码
+	Salt                  string `json:"salt"`                        // 密码的盐值
+	Verifier              string `json:"verifier"`                    // 密码的验证器
+	EmailVerificationCode string `json:"emailVerificationCode"` // 邮箱验证码
+	HumanCheckKey         string `json:"humanCheckKey"`               // 人机验证验证码对应的key
+	HumanCheckCode        string `json:"humanCheckCode"`              // 人机验证验证码
 }
 
 type Login struct {
