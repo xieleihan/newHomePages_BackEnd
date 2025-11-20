@@ -5,8 +5,9 @@ import (
 	"gin/model"
 	"gin/service"
 	"net/http"
-	"time"
 	"strings"
+	"time"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -42,31 +43,31 @@ func RegisterHandler(c *gin.Context) {
 	fmt.Println("注册请求 - 用户名:", req.Username, "邮箱:", req.Email)
 
 	params := map[string]string{
-        "[用户名]":       req.Username,
-        "[邮箱]":        req.Email,
-        "[Salt]":       req.Salt,
-        "[Verifier]":   req.Verifier,
-        "[邮箱验证码]":    req.EmailVerificationCode,
-        "[图形验证码Key]": req.HumanCheckKey,
-        "[图形验证码]":    req.HumanCheckCode,
-    }
+		"[用户名]":      req.Username,
+		"[邮箱]":       req.Email,
+		"[Salt]":     req.Salt,
+		"[Verifier]": req.Verifier,
+		"[邮箱验证码]":    req.EmailVerificationCode,
+		"[图形验证码Key]": req.HumanCheckKey,
+		"[图形验证码]":    req.HumanCheckCode,
+	}
 
-    var missingParams []string
-    for name, value := range params {
-        if value == "" {
-            missingParams = append(missingParams, name)
-        }
-    }
+	var missingParams []string
+	for name, value := range params {
+		if value == "" {
+			missingParams = append(missingParams, name)
+		}
+	}
 
-    if len(missingParams) > 0 {
-        c.JSON(http.StatusBadRequest, gin.H{
-            "error":     "缺失参数: " + strings.Join(missingParams, ", "),
-            "code":      400,
-            "message":   "请求参数缺失",
-            "timestamp": time.Now().Format("2006-01-02 15:04:05"),
-        })
-        return
-    }
+	if len(missingParams) > 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":     "缺失参数: " + strings.Join(missingParams, ", "),
+			"code":      400,
+			"message":   "请求参数缺失",
+			"timestamp": time.Now().Format("2006-01-02 15:04:05"),
+		})
+		return
+	}
 
 	// 检查验证码是否为空
 	if req.EmailVerificationCode == "" {
@@ -141,6 +142,114 @@ func RegisterHandler(c *gin.Context) {
 		"code":      200,
 		"username":  req.Username,
 		"email":     req.Email,
+		"timestamp": time.Now().Format("2006-01-02 15:04:05"),
+	})
+}
+
+// LoginHandler 用户登录处理器
+// @Summary      用户登录第一步
+// @Description  使用SRP协议进行安全的用户登录，返回服务器公钥和盐值
+// @Tags         用户管理
+// @Accept       json
+// @Produce      json
+// @Param        request body model.Login true "用户登录请求参数"
+// @Success      200 {object} map[string]interface{} "登录第一步成功"
+// @Failure      400 {object} map[string]interface{} "参数错误"
+// @Failure      401 {object} map[string]interface{} "用户名或密码错误"
+// @Failure      500 {object} map[string]interface{} "服务器错误"
+// @Router       /api/login [post]
+func LoginHandler(c *gin.Context) {
+	fmt.Println("收到登录请求")
+
+	var req model.Login
+
+	// 绑定和验证请求参数
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Println("登录请求参数错误:", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":     err.Error(),
+			"code":      400,
+			"message":   "请求参数错误",
+			"timestamp": time.Now().Format("2006-01-02 15:04:05"),
+		})
+		return
+	}
+
+	fmt.Println("登录请求 - 用户名:", req.Username)
+
+	// 调用登录服务
+	response, err := service.LoginService(req)
+	if err != nil {
+		fmt.Println("登录失败:", err)
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":     err.Error(),
+			"code":      401,
+			"message":   "用户名或密码错误",
+			"timestamp": time.Now().Format("2006-01-02 15:04:05"),
+		})
+		return
+	}
+
+	fmt.Println("登录第一步成功")
+	c.JSON(http.StatusOK, gin.H{
+		"code":      200,
+		"message":   "登录第一步成功，请进行第二步验证",
+		"salt":      response.Salt,
+		"B":         response.B,
+		"timestamp": time.Now().Format("2006-01-02 15:04:05"),
+	})
+}
+
+// LoginStep2Handler 用户登录第二步处理器
+// @Summary      用户登录第二步
+// @Description  完成SRP协议第二步，验证客户端证据消息
+// @Tags         用户管理
+// @Accept       json
+// @Produce      json
+// @Param        request body model.LoginStep2 true "登录第二步请求参数"
+// @Success      200 {object} map[string]interface{} "登录成功"
+// @Failure      400 {object} map[string]interface{} "参数错误"
+// @Failure      401 {object} map[string]interface{} "验证失败"
+// @Failure      500 {object} map[string]interface{} "服务器错误"
+// @Router       /api/login/step2 [post]
+func LoginStep2Handler(c *gin.Context) {
+	fmt.Println("收到登录第二步请求")
+
+	var req model.LoginStep2
+
+	// 绑定和验证请求参数
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Println("登录第二步请求参数错误:", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":     err.Error(),
+			"code":      400,
+			"message":   "请求参数错误",
+			"timestamp": time.Now().Format("2006-01-02 15:04:05"),
+		})
+		return
+	}
+
+	fmt.Println(" 登录第二步请求 - 用户名:", req.Username)
+
+	// 调用登录第二步服务
+	response, err := service.LoginStep2Service(req)
+	if err != nil {
+		fmt.Println(" 登录第二步失败:", err)
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":     err.Error(),
+			"code":      401,
+			"message":   "登录验证失败",
+			"timestamp": time.Now().Format("2006-01-02 15:04:05"),
+		})
+		return
+	}
+
+	fmt.Println(" 登录第二步成功")
+	c.JSON(http.StatusOK, gin.H{
+		"code":      200,
+		"message":   "登录成功",
+		"M2":        response.M2,
+		"token":     "jwt_token_here", // TODO: 生成JWT token
 		"timestamp": time.Now().Format("2006-01-02 15:04:05"),
 	})
 }

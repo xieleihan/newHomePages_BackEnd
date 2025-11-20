@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <title>SRP 注册与登录测试</title>
+    <script src="/static/js/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha512/0.8.0/sha512.min.js"></script>
+    <script src="/static/pages/srpUtils.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1,
+        h2 {
+            color: #333;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .col {
+            flex: 1;
+        }
+
+        #log {
+            background: #333;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+
+        .captcha-img {
+            cursor: pointer;
+            border: 1px solid #ddd;
+            height: 40px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>SRP 安全登录测试</h1>
+
+        <div class="section">
+            <h2>1. 注册</h2>
+            <div class="form-group">
+                <label>用户名</label>
+                <input
+                    type="text"
+                    id="reg-username"
+                    value="testuser"
+                >
+            </div>
+            <div class="form-group">
+                <label>邮箱</label>
+                <div class="row">
+                    <input
+                        type="email"
+                        id="reg-email"
+                        value="test@example.com"
+                        class="col"
+                    >
+                    <button
+                        type="button"
+                        onclick="sendEmailCode()"
+                        class="btn-secondary"
+                    >发送验证码</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>邮箱验证码</label>
+                <input
+                    type="text"
+                    id="reg-email-code"
+                    placeholder="6位数字"
+                >
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input
+                    type="password"
+                    id="reg-password"
+                    value="password123"
+                >
+            </div>
+            <div class="form-group">
+                <label>图形验证码</label>
+                <div class="row">
+                    <input
+                        type="text"
+                        id="reg-captcha-code"
+                        class="col"
+                        placeholder="输入右侧验证码"
+                    >
+                    <img
+                        id="captcha-img"
+                        class="captcha-img"
+                        src=""
+                        alt="点击刷新"
+                        onclick="refreshCaptcha()"
+                    >
+                    <input
+                        type="hidden"
+                        id="reg-captcha-key"
+                    >
+                </div>
+            </div>
+            <button onclick="doRegister()">注册</button>
+        </div>
+
+        <div class="section">
+            <h2>2. 登录</h2>
+            <div class="form-group">
+                <label>用户名</label>
+                <input
+                    type="text"
+                    id="login-username"
+                    value="testuser"
+                >
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input
+                    type="password"
+                    id="login-password"
+                    value="password123"
+                >
+            </div>
+            <button onclick="doLogin()">登录</button>
+        </div>
+
+        <div id="log">日志将显示在这里...</div>
+    </div>
+
+    <script>
+        // SRP 参数 (RFC 5054 3072-bit)
+        // 使用 srpUtils.js 中定义的标准参数，确保前后端一致
+        const N = BigInt("0x" + RFC5054_N_HEX);
+        const g = RFC5054_g;
+        const k = 3n;
+
+        // 日志工具
+        function log(msg) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${time}] ${msg}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(msg);
+        }
+
+        // 初始化
+        $(document).ready(function () {
+            refreshCaptcha();
+        });
+
+        // 刷新图形验证码
+        function refreshCaptcha() {
+            $.post('/api/captcha', JSON.stringify({}), function (res) {
+                if (res.code === 200) {
+                    $('#captcha-img').attr('src', res.captcha);
+                    $('#reg-captcha-key').val(res.UUID);
+                    log("图形验证码已刷新");
+                }
+            }, 'json');
+        }
+
+        // 发送邮箱验证码
+        function sendEmailCode() {
+            const email = $('#reg-email').val();
+            if (!email) return alert("请输入邮箱");
+
+            log(`正在发送验证码到 ${email}...`);
+            $.ajax({
+                url: '/api/send-email',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ email: email }),
+                success: function (res) {
+                    log("验证码发送成功: " + JSON.stringify(res));
+                    alert("验证码已发送，请查收邮件");
+                },
+                error: function (err) {
+                    log("发送失败: " + JSON.stringify(err.responseJSON));
+                    alert("发送失败: " + (err.responseJSON?.error || "未知错误"));
+                }
+            });
+        }
+
+        // ================= SRP 核心算法 =================
+
+        // BigInt 转 Hex (偶数长度)
+        function bnToHex(bn) {
+            let hex = bn.toString(16);
+            if (hex.length % 2 !== 0) hex = "0" + hex;
+            return hex;
+        }
+
+        // Hex 转 Bytes
+        function hexToBytes(hex) {
+            if (hex.length % 2 !== 0) hex = "0" + hex;
+            const bytes = new Uint8Array(hex.length / 2);
+            for (let i = 0; i < bytes.length; i++) {
+                bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+            }
+            return bytes;
+        }
+
+        // Bytes 转 Hex
+        function bytesToHex(bytes) {
+            let hex = '';
+            for (let i = 0; i < bytes.length; i++) {
+                hex += bytes[i].toString(16).padStart(2, '0');
+            }
+            return hex;
+        }
+
+        // BigInt 转 Bytes (可选 PAD)
+        function bnToBytes(bn, padLength = 0) {
+            let hex = bn.toString(16);
+            if (hex.length % 2 !== 0) hex = "0" + hex;
+
+            if (padLength > 0) {
+                const targetLen = padLength * 2;
+                while (hex.length < targetLen) {
+                    hex = "0" + hex;
+                }
+            }
+            return hexToBytes(hex);
+        }
+
+        // 模幂运算 (base^exp % mod) - 使用二进制平方法
+        function modPow(base, exp, mod) {
+            if (mod === 1n) return 0n;
+            let result = 1n;
+            base = base % mod;
+
+            while (exp > 0n) {
+                // 如果 exp 是奇数
+                if (exp % 2n === 1n) {
+                    result = (result * base) % mod;
+                }
+                // base = base^2 % mod
+                exp = exp >> 1n; // 右移一位（除以2）
+                base = (base * base) % mod;
+            }
+            return result;
+        }
+
+        // 生成随机 BigInt (hex string)
+        function randomHex(len = 32) {
+            const arr = new Uint8Array(len);
+            window.crypto.getRandomValues(arr);
+            return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // 字符串转 Bytes
+        function stringToBytes(str) {
+            return new TextEncoder().encode(str);
+        }
+
+        // ================= 注册流程 =================
+
+        function doRegister() {
+            const username = $('#reg-username').val();
+            const email = $('#reg-email').val();
+            const password = $('#reg-password').val();
+            const emailCode = $('#reg-email-code').val();
+            const captchaCode = $('#reg-captcha-code').val();
+            const captchaKey = $('#reg-captcha-key').val();
+
+            if (!username || !email || !password || !emailCode || !captchaCode) {
+                return alert("请填写完整信息");
+            }
+
+            log("开始注册流程（使用 PBKDF2 + Web Worker）...");
+
+            // 使用 PBKDF2 + Web Worker 生成盐和验证器
+            returnVerifierAndSalt(password).then(({ salt, verifier }) => {
+                log(`生成 Salt: ${salt}`);
+                log(`Verifier 长度: ${verifier.length} (期望 768)`);
+
+                if (verifier.length < 768) {
+                    log(`错误: Verifier 长度不足 ${verifier.length}`);
+                    alert(`计算错误: Verifier 长度异常 (${verifier.length} < 768)`);
+                    return;
+                }
+
+                log(`计算 Verifier: ${verifier.substring(0, 20)}...`);
+
+                // 发送请求
+                const data = {
+                    username: username,
+                    email: email,
+                    salt: salt,
+                    verifier: verifier,
+                    emailVerificationCode: emailCode,
+                    humanCheckKey: captchaKey,
+                    humanCheckCode: captchaCode
+                };
+
+                $.ajax({
+                    url: '/api/register',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function (res) {
+                        log("注册成功: " + JSON.stringify(res));
+                        alert("注册成功，请登录");
+                    },
+                    error: function (err) {
+                        log("注册失败: " + JSON.stringify(err.responseJSON));
+                        alert("注册失败: " + (err.responseJSON?.error || "未知错误"));
+                    }
+                });
+            }).catch(error => {
+                log("计算盐和验证器失败: " + error.message);
+                alert("注册计算失败: " + error.message);
+            });
+        }
+
+        // ================= 登录流程 =================
+
+        function doLogin() {
+            const username = $('#login-username').val();
+            const password = $('#login-password').val();
+
+            if (!username || !password) return alert("请输入用户名和密码");
+
+            log("开始登录流程 Step 1...");
+
+            // 1. 生成随机私钥 a
+            const aHex = randomHex(32);
+            const a = BigInt("0x" + aHex);
+            log(`生成客户端私钥 a: ${aHex}`);
+
+            // 2. 计算客户端公钥 A = g^a % N
+            const A = modPow(g, a, N);
+            const AHex = bnToHex(A);
+            log(`计算客户端公钥 A: ${AHex.substring(0, 20)}...`);
+
+            // 3. 发送 Step 1 请求
+            $.ajax({
+                url: '/api/login',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    username: username,
+                    A: AHex
+                }),
+                success: function (res) {
+                    log("Step 1 成功，收到 Salt 和 B");
+                    handleLoginStep2(username, password, a, A, res.salt, res.B);
+                },
+                error: function (err) {
+                    log("Step 1 失败: " + JSON.stringify(err.responseJSON));
+                    alert("登录失败: " + (err.responseJSON?.message || "未知错误"));
+                }
+            });
+        }
+
+        async function handleLoginStep2(username, password, a, A, salt, BHex) {
+            log("开始登录流程 Step 2...");
+
+            const B = BigInt("0x" + BHex);
+
+            // 1. 计算 u = SHA512(PAD(A) | PAD(B))
+            // PAD 长度为 N 的字节长度 (384 bytes)
+            const padLen = 384;
+            const ABytes = bnToBytes(A, padLen);
+            const BBytes = bnToBytes(B, padLen);
+
+            log(`[DEBUG] 计算 u - PAD长度: ${padLen}, ABytes长度: ${ABytes.length}, BBytes长度: ${BBytes.length}`);
+            log(`[DEBUG] ABytes(hex): ${bytesToHex(ABytes)}`);
+            log(`[DEBUG] BBytes(hex): ${bytesToHex(BBytes)}`);
+
+            // 拼接 A | B
+            const uInput = new Uint8Array(ABytes.length + BBytes.length);
+            uInput.set(ABytes);
+            uInput.set(BBytes, ABytes.length);
+
+            const uHex = sha512(uInput);
+            const u = BigInt("0x" + uHex);
+            log(`计算 u: ${uHex}`);
+
+            // 2. 计算 x = PBKDF2(salt, password)
+            // 必须和注册时使用的方式完全一致！
+            const xHex = await computeHashedPassword(salt, password);
+            const x = BigInt("0x" + xHex);
+
+            // 3. 计算 S = (B - k * g^x) ^ (a + u * x) % N
+            // 先计算 k * g^x % N
+            const gx = modPow(g, x, N);
+            const kgx = (k * gx) % N;
+
+            // 计算 base = B - kgx
+            let base = (B - kgx) % N;
+            if (base < 0n) base += N; // 处理负数
+
+            // 计算 exp = a + u * x
+            const exp = a + u * x;
+
+            // 计算 S
+            const S = modPow(base, exp, N);
+            const SBytes = bnToBytes(S); // No PAD for S in K calculation usually, but let's check backend. 
+            // Backend: K := hashBigInt(S) -> S.Bytes() -> No PAD.
+            // bnToBytes default is No PAD if padLength=0.
+
+            log(`计算共享密钥 S: ${bnToHex(S).substring(0, 20)}...`);
+
+            // 4. 计算 K = SHA512(S)
+            const KHex = sha512(SBytes);
+            const KBytes = hexToBytes(KHex);
+            log(`计算会话密钥 K: ${KHex}`);
+
+            // 5. 计算 M1 = H(H(N) ^ H(g) | H(I) | s | A | B | K)
+
+            // H(N)
+            const NBytes = bnToBytes(N); // No PAD
+            const H_N = hexToBytes(sha512(NBytes));
+
+            // H(g)
+            const gBytes = bnToBytes(g); // No PAD
+            const H_g = hexToBytes(sha512(gBytes));
+
+            // H(N) ^ H(g)
+            const H_xor = new Uint8Array(64);
+            for (let i = 0; i < 64; i++) {
+                H_xor[i] = H_N[i] ^ H_g[i];
+            }
+
+            // H(I) = H(username)
+            const H_I = hexToBytes(sha512(username));
+
+            // salt bytes - salt 是十六进制字符串，需要先解码
+            const saltBytes = hexToBytes(salt);
+
+            // A bytes (No PAD)
+            const ABytesNoPad = bnToBytes(A);
+
+            // B bytes (No PAD)
+            const BBytesNoPad = bnToBytes(B);
+
+            log(`[DEBUG] M1组成部分 - HNxorHg长度: ${H_xor.length}, HI长度: ${H_I.length}, salt长度: ${saltBytes.length}, A长度: ${ABytesNoPad.length}, B长度: ${BBytesNoPad.length}, K长度: ${KBytes.length}`);
+            log(`[DEBUG] HNxorHg: ${bytesToHex(H_xor)}`);
+            log(`[DEBUG] HI: ${bytesToHex(H_I)}`);
+            log(`[DEBUG] salt bytes: ${bytesToHex(saltBytes)}`);
+            log(`[DEBUG] A.Bytes(): ${bytesToHex(ABytesNoPad)}`);
+            log(`[DEBUG] B.Bytes(): ${bytesToHex(BBytesNoPad)}`);
+            log(`[DEBUG] K: ${bytesToHex(KBytes)}`);
+
+            // 拼接 M1 Input
+            // M1Input = H_xor + H_I + salt + A + B + K
+            const totalLen = H_xor.length + H_I.length + saltBytes.length + ABytesNoPad.length + BBytesNoPad.length + KBytes.length;
+            const M1Input = new Uint8Array(totalLen);
+            let offset = 0;
+
+            M1Input.set(H_xor, offset); offset += H_xor.length;
+            M1Input.set(H_I, offset); offset += H_I.length;
+            M1Input.set(saltBytes, offset); offset += saltBytes.length;
+            M1Input.set(ABytesNoPad, offset); offset += ABytesNoPad.length;
+            M1Input.set(BBytesNoPad, offset); offset += BBytesNoPad.length;
+            M1Input.set(KBytes, offset);
+
+            const M1 = sha512(M1Input);
+            log(`计算客户端证据 M1: ${M1}`);
+
+            // 6. 发送 Step 2 请求
+            $.ajax({
+                url: '/api/login/step2',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    username: username,
+                    M1: M1
+                }),
+                success: function (res) {
+                    log("Step 2 成功，收到 M2: " + res.M2);
+                    verifyM2(ABytesNoPad, M1, KBytes, res.M2);
+                },
+                error: function (err) {
+                    log("Step 2 失败: " + JSON.stringify(err.responseJSON));
+                    alert("登录验证失败");
+                }
+            });
+        }
+
+        function verifyM2(ABytes, M1Hex, KBytes, serverM2Hex) {
+            // 计算预期 M2 = H(A | M1 | K)
+            const M1Bytes = hexToBytes(M1Hex);
+
+            const totalLen = ABytes.length + M1Bytes.length + KBytes.length;
+            const M2Input = new Uint8Array(totalLen);
+            let offset = 0;
+
+            M2Input.set(ABytes, offset); offset += ABytes.length;
+            M2Input.set(M1Bytes, offset); offset += M1Bytes.length;
+            M2Input.set(KBytes, offset);
+
+            const expectedM2 = sha512(M2Input);
+
+            if (expectedM2 === serverM2Hex) {
+                log("M2 验证通过！登录完全成功！");
+                alert("登录成功！");
+            } else {
+                log(`M2 验证失败！预期: ${expectedM2}, 实际: ${serverM2Hex}`);
+                alert("服务器验证失败！可能存在中间人攻击！");
+            }
+        }
+
+    </script>
+</body>
+
+</html>

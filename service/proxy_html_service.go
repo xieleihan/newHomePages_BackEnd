@@ -42,7 +42,7 @@ func (s *ProxyHTMLService) FetchHTML(urlStr string) (*model.ProxyHTMLResponse, e
 		urlStr = "https://" + urlStr
 	}
 
-	fmt.Println("DEBUG: 开始获取HTML，URL:", urlStr)
+	fmt.Println(" 开始获取HTML，URL:", urlStr)
 
 	// 创建HTTP请求
 	req, err := http.NewRequest("GET", urlStr, nil)
@@ -65,7 +65,7 @@ func (s *ProxyHTMLService) FetchHTML(urlStr string) (*model.ProxyHTMLResponse, e
 	}
 	defer resp.Body.Close()
 
-	fmt.Println("DEBUG: 请求成功，状态码:", resp.StatusCode)
+	fmt.Println(" 请求成功，状态码:", resp.StatusCode)
 
 	// 检查HTTP状态码
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
@@ -111,7 +111,7 @@ func (s *ProxyHTMLService) FetchHTML(urlStr string) (*model.ProxyHTMLResponse, e
 		ContentLen: int64(len(bodyBytes)),
 	}
 
-	fmt.Println("DEBUG: HTML获取成功，长度:", response.ContentLen, "字节")
+	fmt.Println(" HTML获取成功，长度:", response.ContentLen, "字节")
 
 	return response, nil
 }

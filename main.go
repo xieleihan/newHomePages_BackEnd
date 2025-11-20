@@ -6,6 +6,7 @@ import (
 	_ "gin/docs"
 	"gin/handler"
 	"gin/middleware"
+	"gin/model"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -57,6 +58,8 @@ func main() {
 	private := gin.Default()
 	db.InitRedis()
 	db.InitMysql()
+	// 自动迁移数据库结构
+	db.DB.AutoMigrate(&model.User{})
 
 	public.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"}, // 建议生产配置具体域名
@@ -95,20 +98,21 @@ func main() {
 	// 	c.DataFromReader(resp.StatusCode, resp.ContentLength, resp.Header.Get("Content-Type"), resp.Body, nil)
 	// })
 
-	public.GET("/ip", handler.GetIPInfoHandler)                            // 获取IP的信息路由
-	public.GET("/api/static-files", handler.StaticFilesHandler)            // 获取静态资源文件列表路由
-	public.POST("/api/send-email", handler.SendEmailHandler)               // 发送邮箱验证码路由
-	public.POST("/api/verify-code", handler.VerifyCodeHandler)             // 验证邮箱验证码路由
-	public.POST("/api/captcha", handler.GetCaptchaHandler)                 // 获取图形验证码路由
-	public.POST("/api/verify-captcha", handler.VerifyCaptchaHandler)       // 验证图形验证码路由
-	public.GET("/api/bili-follow-anime", handler.BilibiliAnimeHandler)     // 获取B站追番列表路由
-	public.GET("/api/bili-follow-movie", handler.BilibiliMovieHandler)     // 获取B站追剧列表路由
+	public.GET("/ip", handler.GetIPInfoHandler)                        // 获取IP的信息路由
+	public.GET("/api/static-files", handler.StaticFilesHandler)        // 获取静态资源文件列表路由
+	public.POST("/api/send-email", handler.SendEmailHandler)           // 发送邮箱验证码路由
+	public.POST("/api/verify-code", handler.VerifyCodeHandler)         // 验证邮箱验证码路由
+	public.POST("/api/captcha", handler.GetCaptchaHandler)             // 获取图形验证码路由
+	public.POST("/api/verify-captcha", handler.VerifyCaptchaHandler)   // 验证图形验证码路由
+	public.GET("/api/bili-follow-anime", handler.BilibiliAnimeHandler) // 获取B站追番列表路由
+	public.GET("/api/bili-follow-movie", handler.BilibiliMovieHandler) // 获取B站追剧列表路由
 	// public.GET("/api/server-status", handler.GetServerStatusHandler)       // 获取服务器运行状态路由
 	// public.POST("/api/server-status", handler.GetServerStatusHandler)      // 获取服务器运行状态路由(POST)
 	// public.POST("/api/download-pictures", handler.DownloadPicturesHandler) // 通用图片下载路由
 	// public.POST("/api/proxy-html", handler.ProxyHTMLHandler)               // 代理HTML访问路由
-	public.POST("/api/register", handler.RegisterHandler)               // 用户注册路由
-	// public.POST("/api/login", handler.LoginHandler)                     // 用户登录路由
+	public.POST("/api/register", handler.RegisterHandler)      // 用户注册路由
+	public.POST("/api/login", handler.LoginHandler)            // 用户登录路由（第一步）
+	public.POST("/api/login/step2", handler.LoginStep2Handler) // 用户登录路由（第二步）
 
 	// Swagger 文档路由
 	public.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

@@ -34,7 +34,7 @@ func ProxyHTMLHandler(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("DEBUG: 收到代理HTML请求，URL:", request.URL, "超时时间:", request.Timeout)
+	fmt.Println(" 收到代理HTML请求，URL:", request.URL, "超时时间:", request.Timeout)
 
 	// 创建服务实例
 	proxyService := service.NewProxyHTMLService(request.Timeout)
@@ -52,7 +52,7 @@ func ProxyHTMLHandler(c *gin.Context) {
 	// 获取HTML内容
 	response, err := proxyService.FetchHTML(request.URL)
 	if err != nil {
-		fmt.Println("DEBUG: 获取HTML失败:", err)
+		fmt.Println(" 获取HTML失败:", err)
 		c.JSON(http.StatusInternalServerError, model.ProxyHTMLErrorResponse{
 			Code:    500,
 			Message: "获取HTML内容失败",
@@ -61,7 +61,7 @@ func ProxyHTMLHandler(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("DEBUG: 返回代理HTML响应，标题:", response.Title)
+	fmt.Println(" 返回代理HTML响应，标题:", response.Title)
 
 	c.JSON(http.StatusOK, response)
 }

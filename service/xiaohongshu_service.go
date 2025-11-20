@@ -53,7 +53,7 @@ func extractXHSLink(text string) string {
 		link = strings.TrimRight(link, "，,。.；;")
 		return link
 	}
-	fmt.Println("DEBUG: 未匹配到任何链接，文本:", text)
+	fmt.Println(" 未匹配到任何链接，文本:", text)
 	return ""
 }
 
@@ -96,16 +96,16 @@ func extractNoteID(url string) string {
 	re := regexp.MustCompile(`/explore/([a-zA-Z0-9_]+)`)
 	matches := re.FindStringSubmatch(url)
 	if len(matches) > 1 {
-		fmt.Println("DEBUG: 匹配到格式1，noteID:", matches[1])
+		fmt.Println(" 匹配到格式1，noteID:", matches[1])
 		return matches[1]
 	}
 
 	// 小红书 URL 格式2: https://www.xiaohongshu.com/discovery/item/{noteID}
 	re = regexp.MustCompile(`/discovery/item/([a-zA-Z0-9]+)(?:\?|$)`)
 	matches = re.FindStringSubmatch(url)
-	fmt.Println("DEBUG: 格式2匹配结果:", matches)
+	fmt.Println(" 格式2匹配结果:", matches)
 	if len(matches) > 1 {
-		fmt.Println("DEBUG: 匹配到格式2，noteID:", matches[1])
+		fmt.Println(" 匹配到格式2，noteID:", matches[1])
 		return matches[1]
 	}
 
@@ -113,7 +113,7 @@ func extractNoteID(url string) string {
 	re = regexp.MustCompile(`noteId=([a-zA-Z0-9_]+)`)
 	matches = re.FindStringSubmatch(url)
 	if len(matches) > 1 {
-		fmt.Println("DEBUG: 匹配到备用格式，noteID:", matches[1])
+		fmt.Println(" 匹配到备用格式，noteID:", matches[1])
 		return matches[1]
 	}
 
@@ -143,7 +143,7 @@ func fetchXHSNoteDetail(noteID string) (*model.XHSParseResponse, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("DEBUG: 获取笔记详情失败:", err)
+		fmt.Println(" 获取笔记详情失败:", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
