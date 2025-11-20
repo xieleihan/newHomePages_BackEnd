@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"gin/db"
 	"gin/model"
+	"gin/utils"
 	"math/big"
 	"strings"
 	"time"
@@ -331,15 +332,26 @@ func LoginStep2Service(req model.LoginStep2) (model.LoginStep2Response, error) {
 
 	fmt.Println(" 计算M2成功")
 
-	// 7. 返回M2
+	// 8. 生成 JWT Token
+	token, err := utils.GenerateToken(username)
+	if err != nil {
+		fmt.Println("生成JWT Token失败:", err)
+		db.RDB.Del(db.Ctx, sessionKey)
+		return model.LoginStep2Response{}, errors.New("生成Token失败")
+	}
+
+	fmt.Println(" JWT Token生成成功",token)
+
+	// 9. 返回M2和Token
 	response := model.LoginStep2Response{
-		M2: M2Hex,
+		M2:    M2Hex,
+		Token: token,
 	}
 
 	// 删除已使用的会话数据
 	db.RDB.Del(db.Ctx, sessionKey)
 
-	fmt.Println(" 登录第二步成功 - 返回服务器证据M2")
+	fmt.Println(" 登录第二步成功 - 返回服务器证据M2和JWT Token")
 	return response, nil
 }
 

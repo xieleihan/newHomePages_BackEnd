@@ -14,6 +14,8 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"golang.org/x/time/rate"
+	"gin/utils"
+	"fmt"
 )
 
 func RateLimitMiddleware(rps rate.Limit, burst int) gin.HandlerFunc {
@@ -60,6 +62,10 @@ func main() {
 	db.InitMysql()
 	// 自动迁移数据库结构
 	db.DB.AutoMigrate(&model.User{})
+	if err := utils.InitRSAKeys(); err != nil {
+        fmt.Printf("错误: %v\n", err)
+        return
+    }
 
 	public.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"}, // 建议生产配置具体域名

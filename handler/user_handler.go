@@ -249,7 +249,7 @@ func LoginStep2Handler(c *gin.Context) {
 		"code":      200,
 		"message":   "登录成功",
 		"M2":        response.M2,
-		"token":     "jwt_token_here", // TODO: 生成JWT token
+		"token":     response.Token,
 		"timestamp": time.Now().Format("2006-01-02 15:04:05"),
 	})
 }

@@ -44,5 +44,6 @@ type LoginResponse struct {
 }
 
 type LoginStep2Response struct {
-	M2 string `json:"M2"` // 服务器证据消息
+	M2    string `json:"M2"`    // 服务器证据消息
+	Token string `json:"token"` // JWT Token
 }
