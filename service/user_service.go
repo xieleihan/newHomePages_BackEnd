@@ -340,7 +340,7 @@ func LoginStep2Service(req model.LoginStep2) (model.LoginStep2Response, error) {
 		return model.LoginStep2Response{}, errors.New("生成Token失败")
 	}
 
-	fmt.Println(" JWT Token生成成功",token)
+	fmt.Println(" JWT Token生成成功", token)
 
 	// 9. 返回M2和Token
 	response := model.LoginStep2Response{
@@ -405,4 +405,75 @@ func hashString(str string) []byte {
 func hashBytes(data []byte) []byte {
 	hash := sha512.Sum512(data)
 	return hash[:]
+}
+
+// 重置密码服务
+func ResetPasswordService(req model.ChangePassword) error {
+	// 检查用户名和邮箱是否存在
+	var existingUser model.User
+	if err := db.DB.Where("email = ?", req.Email).First(&existingUser).Error; err != nil {
+		// 用户不存在
+		fmt.Println("用户不存在 - 邮箱:", req.Email)
+		return errors.New("用户不存在,请去注册")
+	}
+
+	// 如果在的话,验证邮箱验证码
+	if !VerifyCode(req.Email, req.EmailVerificationCode) {
+		fmt.Println("邮箱验证码验证失败 - 邮箱:", req.Email)
+		return errors.New("邮箱验证码无效或已过期")
+	}
+
+	// 通过的话走更新对应的用户的salt和验证器,把updatedAt更新下
+	existingUser.Salt = req.Salt
+	existingUser.Verifier = req.Verifier
+	existingUser.UpdatedAt = time.Now().Format(time.RFC3339)
+
+	// 使用 WHERE 条件指定更新哪条记录
+	if err := db.DB.Where("email = ?", req.Email).Save(&existingUser).Error; err != nil {
+		fmt.Println("更新用户密码失败:", err)
+		return errors.New("更新用户密码失败: " + err.Error())
+	} else {
+		fmt.Println("用户密码更新成功 - 邮箱:", existingUser.Email)
+	}
+
+	return nil
+}
+
+// 重置邮箱服务
+func ResetEmailService(req model.ChangeEmail) error {
+	// 检查用户是否存在
+	var existingUser model.User
+	if err := db.DB.Where("email = ?", req.OldEmail).First(&existingUser).Error; err != nil {
+		// 用户不存在
+		fmt.Println("用户不存在 - 邮箱:", req.OldEmail)
+		return errors.New("用户不存在,请去注册")
+	}
+
+	// 在的话验证有没有对这个邮箱有权限
+	if !VerifyCode(req.OldEmail, req.EmailVerificationCode) {
+		fmt.Println("邮箱验证码验证失败 - 邮箱:", req.OldEmail)
+		return errors.New("你没有对这个邮箱进行权限验证,无法更换邮箱")
+	}
+
+	fmt.Println("验证通过,用户ID:", existingUser.UserId)
+
+	// 验证新邮箱
+	if !VerifyCode(req.NewEmail, req.NewEmailVerificationCode) {
+		fmt.Println("邮箱验证码验证失败 - 邮箱:", req.NewEmail)
+		return errors.New("你没有对这个邮箱进行权限验证,无法更换邮箱")
+	}
+
+	// 通过的话走更新对应的用户的email
+	existingUser.Email = req.NewEmail
+	existingUser.UpdatedAt = time.Now().Format(time.RFC3339)
+
+	// 使用 WHERE 条件指定更新哪条记录（通过userId）
+	if err := db.DB.Where("userId = ?", existingUser.UserId).Save(&existingUser).Error; err != nil {
+		fmt.Println("更新用户邮箱失败:", err)
+		return errors.New("更新用户邮箱失败: " + err.Error())
+	} else {
+		fmt.Println("用户邮箱更新成功 - 新邮箱:", existingUser.Email)
+	}
+
+	return nil
 }

@@ -47,3 +47,19 @@ type LoginStep2Response struct {
 	M2    string `json:"M2"`    // 服务器证据消息
 	Token string `json:"token"` // JWT Token
 }
+
+type ChangePassword struct {
+	Email            string `json:"email" binding:"required,email"`
+	EmailVerificationCode string `json:"emailVerificationCode"`
+	HumanCheckKey         string `json:"humanCheckKey"`                  // 人机验证验证码对应的key
+	HumanCheckCode        string `json:"humanCheckCode"`
+	Salt                  string `json:"salt"`                           // 密码的盐值
+	Verifier              string `json:"verifier"` 
+}
+
+type ChangeEmail struct {
+	OldEmail                 string `json:"oldEmail" binding:"required,email"`
+	NewEmail                 string `json:"newEmail" binding:"required,email"`
+	EmailVerificationCode    string `json:"emailVerificationCode"`
+	NewEmailVerificationCode string `json:"newEmailVerificationCode"`
+}

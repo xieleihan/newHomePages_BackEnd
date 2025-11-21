@@ -5,11 +5,15 @@
     <meta charset="UTF-8">
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0"
+        content="width=device-width, initial-scale=1.0,user-scalable=no"
+    >
+    <link
+        rel="icon"
+        href="../icon/TestPagesIcon.svg"
     >
     <title>SRP 注册与登录测试</title>
     <script src="/static/js/jquery-3.7.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha512/0.8.0/sha512.min.js"></script>
+    <script src="/static/js/sha512.min.js"></script>
     <script src="/static/pages/srpUtils.js"></script>
     <style>
         body {
@@ -19,7 +23,7 @@
             padding: 20px;
             background-color: #f5f5f5;
         }
-
+        
         .container {
             background: white;
             padding: 30px;
@@ -116,7 +120,7 @@
 
 <body>
     <div class="container">
-        <h1>SRP 安全登录测试</h1>
+        <h1><img style="height: 32px;" src="../icon/TestPagesIcon.svg" alt="logo" loading="lazy" /> SRP 安全登录测试</h1>
 
         <div class="section">
             <h2>1. 注册</h2>
@@ -206,6 +210,134 @@
             <button onclick="doLogin()">登录</button>
         </div>
 
+        <div class="section">
+            <h2>3. 重置密码</h2>
+            <div class="form-group">
+                <label>用户名</label>
+                <input
+                    type="text"
+                    id="reset-username"
+                    value="testuser"
+                >
+            </div>
+            <div class="form-group">
+                <label>邮箱</label>
+                <div class="row">
+                    <input
+                        type="email"
+                        id="reset-email"
+                        value="test@example.com"
+                        class="col"
+                    >
+                    <button
+                        type="button"
+                        onclick="sendResetEmailCode()"
+                        class="btn-secondary"
+                    >发送验证码</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>邮箱验证码</label>
+                <input
+                    type="text"
+                    id="reset-email-code"
+                    placeholder="6位数字"
+                >
+            </div>
+            <div class="form-group">
+                <label>图形验证码</label>
+                <div class="row">
+                    <input
+                        type="text"
+                        id="reset-captcha-code"
+                        class="col"
+                        placeholder="输入右侧验证码"
+                    >
+                    <img
+                        id="reset-captcha-img"
+                        class="captcha-img"
+                        src=""
+                        alt="点击刷新"
+                        onclick="refreshResetCaptcha()"
+                    >
+                    <input
+                        type="hidden"
+                        id="reset-captcha-key"
+                    >
+                </div>
+            </div>
+            <div class="form-group">
+                <label>新密码</label>
+                <input
+                    type="password"
+                    id="reset-new-password"
+                    value="newpassword123"
+                >
+            </div>
+            <div class="form-group">
+                <label>确认新密码</label>
+                <input
+                    type="password"
+                    id="reset-confirm-password"
+                    value="newpassword123"
+                >
+            </div>
+            <button onclick="doResetPassword()">重置密码</button>
+        </div>
+
+        <div class="section">
+            <h2>4. 修改邮箱</h2>
+            <div class="form-group">
+                <label>旧邮箱</label>
+                <div class="row">
+                    <input
+                        type="email"
+                        id="change-old-email"
+                        value="test@example.com"
+                        class="col"
+                    >
+                    <button
+                        type="button"
+                        onclick="sendOldEmailCode()"
+                        class="btn-secondary"
+                    >发送验证码</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>旧邮箱验证码</label>
+                <input
+                    type="text"
+                    id="change-old-email-code"
+                    placeholder="6位数字"
+                >
+            </div>
+            <div class="form-group">
+                <label>新邮箱</label>
+                <div class="row">
+                    <input
+                        type="email"
+                        id="change-new-email"
+                        value="newemail@example.com"
+                        class="col"
+                    >
+                    <button
+                        type="button"
+                        onclick="sendNewEmailCode()"
+                        class="btn-secondary"
+                    >发送验证码</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>新邮箱验证码</label>
+                <input
+                    type="text"
+                    id="change-new-email-code"
+                    placeholder="6位数字"
+                >
+            </div>
+            <button onclick="doChangeEmail()">修改邮箱</button>
+        </div>
+
         <div id="log">日志将显示在这里...</div>
     </div>
 
@@ -228,6 +360,7 @@
         // 初始化
         $(document).ready(function () {
             refreshCaptcha();
+            refreshResetCaptcha();
         });
 
         // 刷新图形验证码
@@ -584,7 +717,210 @@
             }
         }
 
+        // ================= 重置密码流程 =================
+
+        // 刷新重置密码验证码
+        function refreshResetCaptcha() {
+            $.post('/api/captcha', JSON.stringify({}), function (res) {
+                if (res.code === 200) {
+                    $('#reset-captcha-img').attr('src', res.captcha);
+                    $('#reset-captcha-key').val(res.UUID);
+                    log("重置密码验证码已刷新");
+                }
+            }, 'json');
+        }
+
+        // 发送重置密码邮箱验证码
+        function sendResetEmailCode() {
+            const email = $('#reset-email').val();
+            if (!email) return alert("请输入邮箱");
+
+            log(`正在发送重置密码验证码到 ${email}...`);
+            $.ajax({
+                url: '/api/send-email',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ email: email }),
+                success: function (res) {
+                    log("重置密码验证码发送成功: " + JSON.stringify(res));
+                    alert("验证码已发送，请查收邮件");
+                },
+                error: function (err) {
+                    log("发送失败: " + JSON.stringify(err.responseJSON));
+                    alert("发送失败: " + (err.responseJSON?.error || "未知错误"));
+                }
+            });
+        }
+
+        // 重置密码
+        function doResetPassword() {
+            const username = $('#reset-username').val();
+            const email = $('#reset-email').val();
+            const emailCode = $('#reset-email-code').val();
+            const captchaCode = $('#reset-captcha-code').val();
+            const captchaKey = $('#reset-captcha-key').val();
+            const newPassword = $('#reset-new-password').val();
+            const confirmPassword = $('#reset-confirm-password').val();
+
+            if (!username || !email || !emailCode || !captchaCode || !newPassword || !confirmPassword) {
+                return alert("请填写完整信息");
+            }
+
+            if (newPassword !== confirmPassword) {
+                return alert("两次输入的密码不一致");
+            }
+
+            log("开始重置密码流程...");
+
+            // 使用 PBKDF2 生成盐和验证器（同注册流程）
+            returnVerifierAndSalt(newPassword).then(({ salt, verifier }) => {
+                log(`生成新的 Salt: ${salt}`);
+                log(`验证器长度: ${verifier.length} (期望 768)`);
+
+                if (verifier.length < 768) {
+                    log(`错误: Verifier 长度不足 ${verifier.length}`);
+                    alert(`计算错误: Verifier 长度异常 (${verifier.length} < 768)`);
+                    return;
+                }
+
+                log(`计算新的 Verifier: ${verifier.substring(0, 20)}...`);
+
+                // 发送重置密码请求
+                const data = {
+                    username: username,
+                    email: email,
+                    salt: salt,
+                    verifier: verifier,
+                    emailVerificationCode: emailCode,
+                    humanCheckKey: captchaKey,
+                    humanCheckCode: captchaCode
+                };
+
+                $.ajax({
+                    url: '/api/reset-password',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function (res) {
+                        log("重置密码成功: " + JSON.stringify(res));
+                        alert("密码重置成功，请用新密码登录");
+                        // 清空表单
+                        $('#reset-username').val('');
+                        $('#reset-email').val('');
+                        $('#reset-email-code').val('');
+                        $('#reset-captcha-code').val('');
+                        $('#reset-new-password').val('');
+                        $('#reset-confirm-password').val('');
+                        // 刷新验证码
+                        refreshResetCaptcha();
+                    },
+                    error: function (err) {
+                        log("重置密码失败: " + JSON.stringify(err.responseJSON));
+                        alert("重置失败: " + (err.responseJSON?.error || "未知错误"));
+                    }
+                });
+            }).catch(error => {
+                log("计算盐和验证器失败: " + error.message);
+                alert("重置计算失败: " + error.message);
+            });
+        }
+
+        // ================= 修改邮箱流程 =================
+
+        // 发送旧邮箱验证码
+        function sendOldEmailCode() {
+            const email = $('#change-old-email').val();
+            if (!email) return alert("请输入旧邮箱");
+
+            log(`正在发送旧邮箱验证码到 ${email}...`);
+            $.ajax({
+                url: '/api/send-email',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ email: email }),
+                success: function (res) {
+                    log("旧邮箱验证码发送成功: " + JSON.stringify(res));
+                    alert("验证码已发送，请查收邮件");
+                },
+                error: function (err) {
+                    log("发送失败: " + JSON.stringify(err.responseJSON));
+                    alert("发送失败: " + (err.responseJSON?.error || "未知错误"));
+                }
+            });
+        }
+
+        // 发送新邮箱验证码
+        function sendNewEmailCode() {
+            const email = $('#change-new-email').val();
+            if (!email) return alert("请输入新邮箱");
+
+            log(`正在发送新邮箱验证码到 ${email}...`);
+            $.ajax({
+                url: '/api/send-email',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ email: email }),
+                success: function (res) {
+                    log("新邮箱验证码发送成功: " + JSON.stringify(res));
+                    alert("验证码已发送，请查收邮件");
+                },
+                error: function (err) {
+                    log("发送失败: " + JSON.stringify(err.responseJSON));
+                    alert("发送失败: " + (err.responseJSON?.error || "未知错误"));
+                }
+            });
+        }
+
+        // 修改邮箱
+        function doChangeEmail() {
+            const oldEmail = $('#change-old-email').val();
+            const newEmail = $('#change-new-email').val();
+            const oldEmailCode = $('#change-old-email-code').val();
+            const newEmailCode = $('#change-new-email-code').val();
+
+            if (!oldEmail || !newEmail || !oldEmailCode || !newEmailCode) {
+                return alert("请填写完整信息");
+            }
+
+            if (oldEmail === newEmail) {
+                return alert("新邮箱不能与旧邮箱相同");
+            }
+
+            log("开始修改邮箱流程...");
+            log(`旧邮箱: ${oldEmail}`);
+            log(`新邮箱: ${newEmail}`);
+
+            // 发送修改邮箱请求
+            const data = {
+                oldEmail: oldEmail,
+                newEmail: newEmail,
+                emailVerificationCode: oldEmailCode,
+                newEmailVerificationCode: newEmailCode
+            };
+
+            $.ajax({
+                url: '/api/reset-email',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (res) {
+                    log("修改邮箱成功: " + JSON.stringify(res));
+                    alert("邮箱修改成功！");
+                    // 清空表单
+                    $('#change-old-email').val('');
+                    $('#change-new-email').val('');
+                    $('#change-old-email-code').val('');
+                    $('#change-new-email-code').val('');
+                },
+                error: function (err) {
+                    log("修改邮箱失败: " + JSON.stringify(err.responseJSON));
+                    alert("修改失败: " + (err.responseJSON?.error || "未知错误"));
+                }
+            });
+        }
+
     </script>
 </body>
+
 
 </html>

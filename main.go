@@ -119,6 +119,8 @@ func main() {
 	public.POST("/api/register", handler.RegisterHandler)      // 用户注册路由
 	public.POST("/api/login", handler.LoginHandler)            // 用户登录路由（第一步）
 	public.POST("/api/login/step2", handler.LoginStep2Handler) // 用户登录路由（第二步）
+	public.POST("/api/reset-password", handler.ChangePasswordHandler) // 用户重置密码路由
+	public.POST("/api/reset-email", handler.ResetEmailHandler) // 发送修改邮箱路由
 
 	// Swagger 文档路由
 	public.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

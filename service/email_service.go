@@ -70,7 +70,7 @@ func SendEmail(to, code string) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", config.Email)
 	m.SetHeader("To", to)
-	m.SetHeader("Subject", "账号注册验证码")
+	m.SetHeader("Subject", "数通中台 `-- 通用验证码服务")
 	m.SetBody("text/html", `
 <div style="width: 400px;height: 50px;display: flex;flex-direction: row ;align-items: center;">
   <img style="width:50px;height:50px;margin-right: 10px;" src="https://github.com/xieleihan/QingluanSearch-AndroidDev/raw/main/peacock_flat.png" alt="" />
