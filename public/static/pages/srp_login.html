@@ -709,7 +709,7 @@
             const expectedM2 = sha512(M2Input);
 
             if (expectedM2 === serverM2Hex) {
-                log("M2 验证通过！登录完全成功！");
+                log(`M2 验证通过！登录完全成功！预期: ${expectedM2}, 实际: ${serverM2Hex}`);
                 alert("登录成功！");
             } else {
                 log(`M2 验证失败！预期: ${expectedM2}, 实际: ${serverM2Hex}`);

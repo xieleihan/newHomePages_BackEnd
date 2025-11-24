@@ -36,6 +36,7 @@ var (
 	EmailPort           int
 	Email               string
 	EmailPassword       string
+	DeepseekAPIKey      string
 )
 
 func init() {
@@ -62,6 +63,7 @@ func init() {
 	EmailPort = getEnvAsInt("EMAIL_PORT")
 	Email = getEnv("EMAIL")
 	EmailPassword = getEnv("EMAIL_PASSWORD")
+	DeepseekAPIKey = getEnv("DEEPSEEK_API_KEY")
 }
 
 func getEnv(key string) string {

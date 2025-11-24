@@ -361,7 +361,7 @@ func ChangePasswordHandler(c *gin.Context) {
 // @Tags         用户管理
 // @Accept       json
 // @Produce      json
-// @Param        request body model.ResetEmail true "用户重置邮箱请求参数"
+// @Param        request body model.ChangeEmail true "用户重置邮箱请求参数"
 // @Success      200 {object} map[string]interface{} "重置邮箱成功"
 // @Failure      400 {object} map[string]interface{} "参数错误或验证失败"
 // @Failure      500 {object} map[string]interface{} "服务器错误"
