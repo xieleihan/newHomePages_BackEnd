@@ -5,12 +5,35 @@
     <meta charset="UTF-8">
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0"
+        content="width=device-width, initial-scale=1.0, user-scalable=no"
     >
     <title>静态资源管理器</title>
     <link
         rel="stylesheet"
         href="../css/style.css"
+    >
+    <link
+        rel="icon"
+        type="image/svg+xml"
+        href="../icon/React.svg"
+    />
+    <link
+        rel="icon"
+        type="image/x-icon"
+        href="../icon/React.svg"
+    >
+    <link
+        rel="apple-touch-icon"
+        href="../icon/React.svg"
+    >
+    <link
+        rel="bookmark"
+        href="../icon/React.svg"
+    >
+    <link
+        rel="apple-touch-icon-precomposed"
+        sizes="180x180"
+        href="../icon/React.svg"
     >
 </head>
 
@@ -262,7 +285,7 @@
 
                     let previewHtml = '';
                     if (isImage) {
-                        previewHtml = `<img class="resource-img" src="../${file.path}" alt="${file.name}" loading="lazy">`;
+                        previewHtml = `<img class="resource-img" src="..${file.path}" alt="${file.name}" loading="lazy">`;
                     } else {
                         previewHtml = `<div class="resource-icon">${fileIcons[fileType] || fileIcons.other}</div>`;
                     }
@@ -279,10 +302,10 @@
                                 </div>
                                 <div class="resource-actions">
                                     ${isImage ?
-                            `<a href="../${file.path}" target="_blank" class="btn btn-primary">预览</a>` :
-                            `<a href="../${file.path}" download class="btn btn-primary">下载</a>`
+                            `<a href="..${file.path}" target="_blank" class="btn btn-primary">预览</a>` :
+                            `<a href="..${file.path}" download class="btn btn-primary">下载</a>`
                         }
-                                    <a href="../${file.path}" target="_blank" class="btn btn-secondary">链接</a>
+                                    <a href="..${file.path}" target="_blank" class="btn btn-secondary">链接</a>
                                 </div>
                             </div>
                         </div>

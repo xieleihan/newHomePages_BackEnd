@@ -7,6 +7,7 @@ import (
 	"gin/handler"
 	"gin/middleware"
 	"gin/model"
+	"gin/service"
 	"time"
 
 	"fmt"
@@ -68,6 +69,11 @@ func main() {
 		return
 	}
 
+	// 初始化定时任务
+	if err := service.InitScheduledTasks(); err != nil {
+		fmt.Printf("警告: 定时任务初始化失败: %v\n", err)
+	}
+
 	public.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"}, // 建议生产配置具体域名
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -117,12 +123,14 @@ func main() {
 	// public.POST("/api/server-status", handler.GetServerStatusHandler)      // 获取服务器运行状态路由(POST)
 	// public.POST("/api/download-pictures", handler.DownloadPicturesHandler) // 通用图片下载路由
 	// public.POST("/api/proxy-html", handler.ProxyHTMLHandler)               // 代理HTML访问路由
-	public.POST("/api/register", handler.RegisterHandler)                                  // 用户注册路由
-	public.POST("/api/login", handler.LoginHandler)                                        // 用户登录路由（第一步）
-	public.POST("/api/login/step2", handler.LoginStep2Handler)                             // 用户登录路由（第二步）
-	public.POST("/api/reset-password", handler.ChangePasswordHandler)                      // 用户重置密码路由
+	public.POST("/api/register", handler.RegisterHandler)             // 用户注册路由
+	public.POST("/api/login", handler.LoginHandler)                   // 用户登录路由（第一步）
+	public.POST("/api/login/step2", handler.LoginStep2Handler)        // 用户登录路由（第二步）
+	public.POST("/api/reset-password", handler.ChangePasswordHandler) // 用户重置密码路由
 	public.POST("/api/reset-email", handler.ResetEmailHandler)
 	public.POST("/api/llm-message/deepseek", handler.SendMessageToLLMStreamHandler) // 流式传输 DeepSeek 消息
+	public.POST("/api/SendEncryptionMessage", handler.EncryptMessageHandler)        // 加密消息传输接口
+	public.POST("/api/GetEncryptionMessage", handler.DecryptMessageHandler)         // 解密消息传输接口
 
 	// Swagger 文档路由
 	public.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
