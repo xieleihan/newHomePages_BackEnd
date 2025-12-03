@@ -131,7 +131,7 @@ func main() {
 	public.POST("/api/llm-message/deepseek", handler.SendMessageToLLMStreamHandler) // 流式传输 DeepSeek 消息
 	public.POST("/api/SendEncryptionMessage", handler.EncryptMessageHandler)        // 加密消息传输接口
 	public.POST("/api/GetEncryptionMessage", handler.DecryptMessageHandler)         // 解密消息传输接口
-
+	
 	// Swagger 文档路由
 	public.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -141,14 +141,16 @@ func main() {
 	// }
 
 	private.POST("/api/proxy", handler.ProxyDownloadHandler)
-	// private.GET("/private/test", func(c *gin.Context) {
-	// 	c.JSON(200, gin.H{
-	// 		"message": "Private API is running!",
-	// 		"code":    200,
-	// 		"time":    time.Now().Format("2006-01-02 15:04:05"),
-	// 		"version": config.Version,
-	// 	})
-	// })
+	private.GET("/api/dns/query", handler.QueryDNSHandler)                           // DNS查询接口 (GET)
+	private.POST("/api/dns/query", handler.QueryDNSPostHandler)                      // DNS查询接口 (POST)
+	private.GET("/private/test", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "Private API is running!",
+			"code":    200,
+			"time":    time.Now().Format("2006-01-02 15:04:05"),
+			"version": config.Version,
+		})
+	})
 
 	// 启动公共接口服务
 	go func() {
