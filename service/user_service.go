@@ -295,21 +295,31 @@ func LoginStep2Service(req model.LoginStep2) (model.LoginStep2Response, error) {
 	// 构建M1的输入
 	// 注意：这里需要确保顺序和客户端完全一致
 	// M1 = H(H(N) XOR H(g) | H(I) | s | A | B | K)
+	nlen := N.BitLen() / 8
+	if N.BitLen()%8 > 0 {
+		nlen++
+	}
+
+	// PAD A 和 B 到正确长度
+	// ⚠️ 关键：必须创建新的字节数组，不能直接修改
+	ABytesWithPad := padBigIntBytes(A, nlen)
+	BBytesWithPad := padBigIntBytes(B, nlen)
+
 	var M1Input []byte
 	M1Input = append(M1Input, HNxorHg...)
 	M1Input = append(M1Input, HI...)
 	M1Input = append(M1Input, saltBytes...)
-	M1Input = append(M1Input, A.Bytes()...)
-	M1Input = append(M1Input, B.Bytes()...)
+	M1Input = append(M1Input, ABytesWithPad...)
+	M1Input = append(M1Input, BBytesWithPad...)
 	M1Input = append(M1Input, K...)
 
-	fmt.Printf(" M1输入组成 - HNxorHg长度: %d, HI长度: %d, salt长度: %d, A长度: %d, B长度: %d, K长度: %d\n",
-		len(HNxorHg), len(HI), len(saltBytes), len(A.Bytes()), len(B.Bytes()), len(K))
+	fmt.Printf(" M1输入组成 - HNxorHg长度: %d, HI长度: %d, salt长度: %d, A长度: %d(PAD后), B长度: %d(PAD后), K长度: %d\n",
+		len(HNxorHg), len(HI), len(saltBytes), len(ABytesWithPad), len(BBytesWithPad), len(K))
 	fmt.Printf(" HNxorHg: %x\n", HNxorHg)
 	fmt.Printf(" HI: %x\n", HI)
 	fmt.Printf(" salt bytes: %x\n", saltBytes)
-	fmt.Printf(" A.Bytes(): %x\n", A.Bytes())
-	fmt.Printf(" B.Bytes(): %x\n", B.Bytes())
+	fmt.Printf(" A.Bytes(PAD): %x\n", ABytesWithPad)
+	fmt.Printf(" B.Bytes(PAD): %x\n", BBytesWithPad)
 	fmt.Printf(" K: %x\n", K)
 
 	expectedM1 := hashBytes(M1Input)
@@ -325,7 +335,8 @@ func LoginStep2Service(req model.LoginStep2) (model.LoginStep2Response, error) {
 	fmt.Println(" M1验证成功")
 
 	// 6. 计算 M2 = H(A | M1 | K)
-	M2Input := append(A.Bytes(), expectedM1...)
+	// ⚠️ 关键：A 也必须使用 PAD 后的值
+	M2Input := append(ABytesWithPad, expectedM1...)
 	M2Input = append(M2Input, K...)
 	M2 := hashBytes(M2Input)
 	M2Hex := fmt.Sprintf("%x", M2)
@@ -366,15 +377,9 @@ func calculateU(A, B *big.Int) *big.Int {
 
 	fmt.Printf(" 计算 u - N字节长度 (PAD长度): %d\n", nlen)
 
-	// PAD A 和 B
-	aBytes := make([]byte, nlen)
-	bBytes := make([]byte, nlen)
-
-	aData := A.Bytes()
-	bData := B.Bytes()
-
-	copy(aBytes[nlen-len(aData):], aData)
-	copy(bBytes[nlen-len(bData):], bData)
+	// PAD A 和 B 使用正确的方式
+	aBytes := padBigIntBytes(A, nlen)
+	bBytes := padBigIntBytes(B, nlen)
 
 	// 连接 A | B
 	input := append(aBytes, bBytes...)
@@ -476,4 +481,26 @@ func ResetEmailService(req model.ChangeEmail) error {
 	}
 
 	return nil
+}
+
+// padBigIntBytes 将 big.Int 转换为指定长度的字节数组（前导补零）
+func padBigIntBytes(num *big.Int, targetLen int) []byte {
+	rawBytes := num.Bytes()
+
+	// 如果长度已经等于目标长度，直接返回
+	if len(rawBytes) == targetLen {
+		return rawBytes
+	}
+
+	// 如果长度超过目标长度，则截断（这通常表示数据有问题）
+	if len(rawBytes) > targetLen {
+		fmt.Printf("警告: big.Int 字节长度 (%d) 超过目标长度 (%d)，可能导致数据丢失\n", len(rawBytes), targetLen)
+		return rawBytes
+	}
+
+	// 创建新数组，前导补零
+	padded := make([]byte, targetLen)
+	copy(padded[targetLen-len(rawBytes):], rawBytes)
+
+	return padded
 }
